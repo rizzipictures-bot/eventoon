@@ -68,7 +68,9 @@ const EV=[
 {id:"mom1",t:"mostra",ti:"Jori \u2014 Quadri Viventi",c:"arte",df:"2026-02-15",dt:"2026-04-15",or:"Mar-Sab 10-19:30",lo:"Galleria Mazzoli",ck:"modena",de:"25 opere su tela e legno antico. Pop art emiliana.",fr:true,so:"Itinerari nell'Arte"},
 {id:"mom2",t:"mostra",ti:"Wunderkammer \u2014 Meraviglie",c:"arte",df:"2025-11-30",dt:"2026-05-10",or:"Mar-Dom 10-18",lo:"Palazzo dei Musei",ck:"modena",de:"Meraviglie delle collezioni museali modenesi.",fr:false,so:"Itinerari nell'Arte"},
 ];
-function isO(m,d){return new Date(d)>=new Date(m.df)&&new Date(d)<=new Date(m.dt)}
+function norm(e){return {id:e.id,type:e.t||e.type||"evento",title:e.ti||e.title||"",category:e.c||e.category||"",date:e.d||e.date||"",time:e.tm||e.time||"",location:e.lo||e.location||"",cityKey:e.ck||e.cityKey||"",description:e.de||e.description||"",free:e.fr===true||e.free===true,source:e.so||e.source||"",dateFrom:e.df||e.dateFrom||"",dateTo:e.dt||e.dateTo||"",orari:e.or||e.orari||"",subcat:e.subcat||""}};
+var FALLBACK_N=EV.map(norm);
+function isO(m,d){return new Date(d)>=new Date(m.dateFrom)&&new Date(d)<=new Date(m.dateTo)}
 
 function Bdg({children,bg,color,style:st}){
   return <span style={{background:bg||"#1a1a1a",color:color||"#fff",fontFamily:P,fontStyle:"italic",fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",padding:"5px 14px",borderRadius:20,display:"inline-flex",alignItems:"center",gap:4,...(st||{})}}>{children}</span>;
@@ -86,29 +88,29 @@ function ComicSVG({cat}){
 }
 
 function Ecard({e,onClick}){
-  var cc=CC[e.c]||{bg:"#666",l:"EVENTO",i:"\u26a1"};
-  var isM=e.t==="mostra";
-  var perm=isM&&e.dt&&new Date(e.dt).getFullYear()>2026;
-  var db=isM&&e.dt?(perm?"SEMPRE APERTO":"FINO AL "+new Date(e.dt).toLocaleDateString("it",{day:"numeric",month:"2-digit"})):null;
+  var cc=CC[e.category]||{bg:"#666",l:"EVENTO",i:"\u26a1"};
+  var isM=e.type==="mostra";
+  var perm=isM&&e.dateTo&&new Date(e.dateTo).getFullYear()>2026;
+  var db=isM&&e.dt?(perm?"SEMPRE APERTO":"FINO AL "+new Date(e.dateTo).toLocaleDateString("it",{day:"numeric",month:"2-digit"})):null;
   return (
     <div onClick={function(){onClick(e)}} style={{borderRadius:18,overflow:"hidden",background:"#fff",border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",cursor:"pointer",marginBottom:14}}>
       <div style={{height:140,position:"relative",overflow:"hidden"}}>
-        <ComicSVG cat={e.c}/>
+        <ComicSVG cat={e.category}/>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(circle,rgba(0,0,0,.1) 1px,transparent 1px)",backgroundSize:"5px 5px",opacity:.3}}/>
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:40,background:"linear-gradient(transparent,rgba(0,0,0,.25))"}}/>
         <div style={{position:"absolute",top:10,left:10}}><Bdg bg={cc.bg}>{cc.i} {cc.l}</Bdg></div>
         {db && <div style={{position:"absolute",top:10,right:10}}><Bdg bg={perm?"#059669":"#EA580C"}>{db}</Bdg></div>}
-        {e.fr && <div style={{position:"absolute",bottom:10,left:10,background:"#10B981",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 8px",fontSize:9,fontWeight:900,color:"#fff"}}>GRATIS</div>}
-        {!e.fr && <div style={{position:"absolute",bottom:10,left:10,width:28,height:28,borderRadius:"50%",background:"#FCD34D",border:"2px solid #1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900}}>{"\u20ac"}</div>}
+        {e.free && <div style={{position:"absolute",bottom:10,left:10,background:"#10B981",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 8px",fontSize:9,fontWeight:900,color:"#fff"}}>GRATIS</div>}
+        {!e.freeee && <div style={{position:"absolute",bottom:10,left:10,width:28,height:28,borderRadius:"50%",background:"#FCD34D",border:"2px solid #1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900}}>{"\u20ac"}</div>}
       </div>
       <div style={{padding:"12px 16px 14px"}}>
-        <div style={{fontFamily:P,fontStyle:"italic",fontSize:20,fontWeight:700,textTransform:"uppercase",lineHeight:1.1,letterSpacing:.5}}>{e.ti}</div>
-        <div style={{fontSize:13,color:"#777",marginTop:5,lineHeight:1.5}}>{e.de}</div>
+        <div style={{fontFamily:P,fontStyle:"italic",fontSize:20,fontWeight:700,textTransform:"uppercase",lineHeight:1.1,letterSpacing:.5}}>{e.title}</div>
+        <div style={{fontSize:13,color:"#777",marginTop:5,lineHeight:1.5}}>{e.description}</div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8,fontSize:12,color:"#aaa",flexWrap:"wrap"}}>
-          {e.tm && <span>{"\u23f0"} {e.tm}</span>}
-          {e.or && <span>{"\ud83d\udd50"} {e.or}</span>}
-          <span>{"\ud83d\udccd"} {e.lo}</span>
-          <span style={{marginLeft:"auto",fontSize:10}}>{e.so}</span>
+          {e.tm && <span>{"\u23f0"} {e.time}</span>}
+          {e.or && <span>{"\ud83d\udd50"} {e.orari}</span>}
+          <span>{"\ud83d\udccd"} {e.location}</span>
+          <span style={{marginLeft:"auto",fontSize:10}}>{e.source}</span>
         </div>
       </div>
     </div>
@@ -136,13 +138,13 @@ function App(){
   var _srch=useState(false),srch=_srch[0],setSrch=_srch[1];
   var _sv=useState([]),sv=_sv[0],setSv=_sv[1];
   var _svP=useState(false),svP=_svP[0],setSvP=_svP[1];
-  var _all=useState(EV),all=_all[0],setAll=_all[1];
+  var _all=useState(FALLBACK_N),all=_all[0],setAll=_all[1];
   var _pt=useState("pref"),pt=_pt[0],setPt=_pt[1];
   var _set=useState({not:true,geo:true,rag:"5km",dark:false}),sett=_set[0],setSett=_set[1];
   var mR=useRef(null),mO=useRef(null);
 
   useEffect(function(){try{setSv(JSON.parse(localStorage.getItem("ev_sv")||"[]"))}catch(e){}},[]);
-  useEffect(function(){fetch("events.json").then(function(r){return r.json()}).then(function(d){if(d.events&&d.events.length>0)setAll(d.events)}).catch(function(){})},[]);
+  useEffect(function(){fetch("events.json").then(function(r){return r.json()}).then(function(d){if(d.events&&d.events.length>0)setAll(d.events.map(norm))}).catch(function(){})},[]);
 
   function tgSv(id){setSv(function(p){var n=p.includes(id)?p.filter(function(x){return x!==id}):[].concat(p,[id]);localStorage.setItem("ev_sv",JSON.stringify(n));return n})}
 
@@ -152,9 +154,9 @@ function App(){
     var L=window.L;var ci=CITIES[city];
     if(!mO.current){mO.current=L.map(mR.current,{zoomControl:false}).setView([ci.lat,ci.lng],13);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"\u00a9 OSM"}).addTo(mO.current);setTimeout(function(){mO.current.invalidateSize()},300)}
     mO.current.eachLayer(function(l){if(l instanceof L.Marker)mO.current.removeLayer(l)});
-    all.filter(function(e){return e.ck===city&&(cat==="tutti"||e.c===cat)}).forEach(function(e){
+    all.filter(function(e){return e.cityKey===city&&(cat==="tutti"||e.c===cat)}).forEach(function(e){
       var co=CO[e.id];if(!co)return;
-      var cc=CC[e.c]||{bg:"#666",i:"\u26a1"};
+      var cc=CC[e.category]||{bg:"#666",i:"\u26a1"};
       var ic=L.divIcon({className:"",html:"<div style='width:42px;height:42px;border-radius:50%;background:"+cc.bg+";border:3px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 8px rgba(0,0,0,.3)'>"+cc.i+"</div>",iconSize:[42,42],iconAnchor:[21,21]});
       L.marker(co,{icon:ic}).addTo(mO.current).on("click",function(){setSel(e)});
     });
@@ -163,15 +165,15 @@ function App(){
   },[tab,city,cat,all]);
 
   var c=CITIES[city];
-  var aC=all.filter(function(e){return e.ck===city});
+  var aC=all.filter(function(e){return e.cityKey===city});
   // For fallback events use 'c' field, for loaded events use 'category'
   var getCat=function(e){return e.c||e.category||""};
   var getType=function(e){return e.t||e.type||""};
-  var mostre=aC.filter(function(e){return getType(e)==="mostra"&&((e.df&&e.dt)?isO(e,day):(e.dateFrom&&e.dateTo?new Date(day)>=new Date(e.dateFrom)&&new Date(day)<=new Date(e.dateTo):false))&&(cat==="tutti"||cat==="arte"||getCat(e)===cat)});
-  var eventi=aC.filter(function(e){return getType(e)==="evento"&&(e.d||e.date)===day&&(cat==="tutti"||getCat(e)===cat)});
+  var mostre=aC.filter(function(e){return e.type==="mostra"&&((e.dateFrom&&e.dateTo)?isO(e,day):(false?new Date(day)>=new Date(e.dateFrom)&&new Date(day)<=new Date(e.dateTo):false))&&(cat==="tutti"||cat==="arte"||e.category===cat)});
+  var eventi=aC.filter(function(e){return e.type==="evento"&&e.date===day&&(cat==="tutti"||e.category===cat)});
   var tot=mostre.length+eventi.length;
-  var perm=mostre.filter(function(m){var dt=m.dt||m.dateTo;return dt&&new Date(dt).getFullYear()>2026});
-  var sRes=sq.length>=2?aC.filter(function(e){var s=((e.ti||e.title||"")+" "+(e.de||e.description||"")+" "+(e.lo||e.location||"")).toLowerCase();return s.indexOf(sq.toLowerCase())>=0}):[];
+  var perm=mostre.filter(function(m){var dt=m.dateTo;return dt&&new Date(dt).getFullYear()>2026});
+  var sRes=sq.length>=2?aC.filter(function(e){var s=((e.title||"")+" "+(e.description||"")+" "+(e.location||"")).toLowerCase();return s.indexOf(sq.toLowerCase())>=0}):[];
   var svEv=all.filter(function(e){return sv.includes(e.id)});
   var d0=new Date().toISOString().slice(0,10);
   var d1=(function(){var t=new Date();t.setDate(t.getDate()+1);return t.toISOString().slice(0,10)})();
@@ -189,11 +191,13 @@ function App(){
           <span style={{color:"#DC2626",fontFamily:P,fontStyle:"italic",fontSize:10,fontWeight:900,lineHeight:1,textAlign:"center"}}>EVENT<br/>OON!</span>
         </div>
         <div>
-          <div style={{fontFamily:P,fontStyle:"italic",fontSize:26,fontWeight:900,lineHeight:1}}><span style={{color:"#1a1a1a"}}>EVENT</span><span style={{color:"#DC2626"}}>OON!</span></div>
+          <div style={{fontFamily:P,fontStyle:"italic",fontSize:32,fontWeight:900,lineHeight:1}}><span style={{color:"#1a1a1a"}}>EVENT</span><span style={{color:"#DC2626"}}>OON!</span></div>
           <div style={{fontSize:12,color:"#333",marginTop:1}}>La tua citt\u00e0, a fumetti</div>
         </div>
       </div>
-      <div onClick={function(){setSvP(!svP)}} style={{width:44,height:44,borderRadius:"50%",background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <div onClick={function(){setMenu(!menu)}} style={{background:"#1a1a1a",color:"#FCD34D",borderRadius:12,padding:"6px 14px",fontFamily:P,fontStyle:"italic",fontSize:14,letterSpacing:1,cursor:"pointer"}}>{c.s} {"\u25be"}</div>
+        <div onClick={function(){setSvP(!svP)}} style={{width:44,height:44,borderRadius:"50%",background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}>
         <span style={{fontSize:20}}>{"\ud83d\udd14"}</span>
         {sv.length>0 && <div style={{position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:"#DC2626",border:"2px solid #FCD34D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700}}>{sv.length}</div>}
       </div>
@@ -206,10 +210,10 @@ function App(){
     <div onClick={function(e){e.stopPropagation()}} style={{position:"absolute",top:60,right:10,width:300,maxHeight:"65vh",background:"#fff",borderRadius:18,border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",overflow:"hidden"}}>
       <div style={{padding:"12px 16px",background:"#FCD34D",fontFamily:P,fontStyle:"italic",fontSize:18,borderBottom:"3px solid #1a1a1a"}}>{"\ud83d\udd14"} SALVATI ({sv.length})</div>
       <div style={{maxHeight:"50vh",overflowY:"auto"}}>
-        {svEv.length>0?svEv.map(function(e){var cc=CC[getCat(e)]||{bg:"#666",i:"\u26a1"};return (
+        {svEv.length>0?svEv.map(function(e){var cc=CC[e.category]||{bg:"#666",i:"\u26a1"};return (
           <div key={e.id} onClick={function(){setSel(e);setSvP(false)}} style={{padding:"12px 16px",borderBottom:"1.5px solid #eee",display:"flex",gap:10,alignItems:"center",cursor:"pointer"}}>
             <div style={{width:34,height:34,borderRadius:10,background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,border:"2px solid #1a1a1a"}}>{cc.i}</div>
-            <div><div style={{fontFamily:P,fontStyle:"italic",fontSize:14}}>{e.ti||e.title}</div><div style={{fontSize:11,color:"#999",marginTop:1}}>{e.lo||e.location}</div></div>
+            <div><div style={{fontFamily:P,fontStyle:"italic",fontSize:14}}>{e.title}</div><div style={{fontSize:11,color:"#999",marginTop:1}}>{e.location}</div></div>
           </div>
         )}):<div style={{padding:"30px",textAlign:"center",color:"#ccc"}}><div style={{fontSize:32,marginBottom:6}}>{"\u2b50"}</div>Nessun evento salvato</div>}
       </div>
@@ -254,10 +258,6 @@ function App(){
     {/* HOME */}
     {tab==="home" && <div style={{padding:"0 16px"}}>
 
-      {/* City selector */}
-      <div onClick={function(){setMenu(true)}} style={{margin:"12px 0 10px",background:"#fff",border:"2.5px solid #1a1a1a",borderRadius:14,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",boxShadow:"2px 2px 0 #1a1a1a"}}>
-        <span style={{fontFamily:P,fontStyle:"italic",fontSize:17}}>{"\ud83d\udccd"} {c.n}</span>
-        <span style={{fontFamily:P,fontStyle:"italic",fontSize:13,color:"#999"}}>Cambia {"\u25be"}</span>
       </div>
 
       {/* SEMPRE APERTO */}
@@ -265,9 +265,9 @@ function App(){
         <div style={{fontFamily:P,fontStyle:"italic",fontSize:17,color:"#059669",letterSpacing:1,marginBottom:4}}>{"\ud83c\udfdb\ufe0f"} SEMPRE APERTO</div>
         <div style={{fontSize:12,color:"#999",marginBottom:8}}>Mostre, musei e luoghi sempre visitabili</div>
         <div style={{display:"flex",gap:10,overflowX:"auto",scrollbarWidth:"none",marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16}}>
-          {perm.map(function(m){var cc=CC[getCat(m)]||{bg:"#666",i:"\u26a1"};var db="SEMPRE APERTO";return (
+          {perm.map(function(m){var cc=CC[m.category]||{bg:"#666",i:"\u26a1"};var db="SEMPRE APERTO";return (
             <div key={m.id} onClick={function(){setSel(m)}} style={{minWidth:240,border:"2.5px solid #1a1a1a",borderRadius:14,overflow:"hidden",background:"#fff",boxShadow:"3px 3px 0 #1a1a1a",cursor:"pointer",flexShrink:0}}>
-              <div style={{height:44,background:BG[getCat(m)]||BG.arte,position:"relative",display:"flex",alignItems:"center",padding:"0 12px",gap:8}}>
+              <div style={{height:44,background:BG[m.category]||BG.arte,position:"relative",display:"flex",alignItems:"center",padding:"0 12px",gap:8}}>
                 <span style={{fontSize:18}}>{cc.i}</span>
                 <Bdg bg="#059669" style={{fontSize:9,padding:"2px 8px"}}>{db}</Bdg>
               </div>
@@ -278,9 +278,9 @@ function App(){
       </div>}
 
       {/* SEARCH BOX */}
-      <div onClick={function(){setSrch(true)}} style={{background:"#fff",border:"2.5px solid #1a1a1a",borderRadius:14,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:12,boxShadow:"2px 2px 0 #1a1a1a"}}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#999"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <span style={{fontSize:15,color:"#aaa"}}>Cerca eventi a {c.n}...</span>
+      <div onClick={function(){setSrch(true)}} style={{background:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:18,padding:"14px 16px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:12,boxShadow:"3px 3px 0 #1a1a1a"}}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1a1a1a"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span style={{fontFamily:P,fontStyle:"italic",fontSize:16,color:"#1a1a1a",opacity:.5}}>CERCA EVENTI A {c.n.toUpperCase()}...</span>
       </div>
 
       {/* FILTERS */}
@@ -298,7 +298,7 @@ function App(){
       <div style={{fontSize:13,color:"#999",marginBottom:10}}>{tot} eventi trovati</div>
 
       {/* CARDS */}
-      {mostre.filter(function(m){var dt=m.dt||m.dateTo;return !(dt&&new Date(dt).getFullYear()>2026)}).map(function(m){return <Ecard key={m.id} e={m} onClick={setSel}/>})}
+      {mostre.filter(function(m){var dt=m.dateTo;return !(dt&&new Date(dt).getFullYear()>2026)}).map(function(m){return <Ecard key={m.id} e={m} onClick={setSel}/>})}
       {eventi.map(function(e){return <Ecard key={e.id} e={e} onClick={setSel}/>})}
       {tot===0 && <div style={{textAlign:"center",padding:50}}><div style={{fontFamily:P,fontStyle:"italic",fontSize:42,color:"#eee"}}>NADA!</div></div>}
     </div>}
@@ -390,10 +390,10 @@ function App(){
           <div onClick={function(){setPt("fum")}} style={{flex:1,padding:11,textAlign:"center",background:pt==="fum"?"#FCD34D":"#fff",fontFamily:P,fontStyle:"italic",fontSize:14,cursor:"pointer",borderLeft:"3px solid #1a1a1a"}}>{"\ud83c\udfa8"} I miei fumetti</div>
         </div>
         {pt==="pref" && (svEv.length>0?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          {svEv.map(function(e){var cc=CC[getCat(e)]||{bg:"#666",i:"\u26a1"};return (
+          {svEv.map(function(e){var cc=CC[e.category]||{bg:"#666",i:"\u26a1"};return (
             <div key={e.id} onClick={function(){setSel(e)}} style={{background:"#fff",border:"2.5px solid #1a1a1a",borderRadius:14,overflow:"hidden",cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>
-              <div style={{height:60,position:"relative"}}><ComicSVG cat={getCat(e)}/><div style={{position:"absolute",top:6,left:6,width:24,height:24,borderRadius:8,background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,border:"2px solid #1a1a1a"}}>{cc.i}</div></div>
-              <div style={{padding:"8px 10px"}}><div style={{fontFamily:P,fontStyle:"italic",fontSize:13,lineHeight:1.2}}>{e.ti||e.title}</div><div style={{fontSize:10,color:"#999",marginTop:2}}>{e.lo||e.location}</div></div>
+              <div style={{height:60,position:"relative"}}><ComicSVG cat={e.category}/><div style={{position:"absolute",top:6,left:6,width:24,height:24,borderRadius:8,background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,border:"2px solid #1a1a1a"}}>{cc.i}</div></div>
+              <div style={{padding:"8px 10px"}}><div style={{fontFamily:P,fontStyle:"italic",fontSize:13,lineHeight:1.2}}>{e.title}</div><div style={{fontSize:10,color:"#999",marginTop:2}}>{e.location}</div></div>
             </div>
           )})}
         </div>:<div style={{textAlign:"center",padding:30,color:"#ccc"}}><div style={{fontSize:32}}>{"\u2b50"}</div>Nessun evento salvato</div>)}
@@ -441,22 +441,22 @@ function App(){
     <div style={{position:"relative",zIndex:1,width:"100%",background:"#fff",borderRadius:"22px 22px 0 0",maxHeight:"85vh",overflowY:"auto",animation:"su .3s cubic-bezier(.32,.72,.37,1.05)",paddingBottom:24,border:"3px solid #1a1a1a",borderBottom:"none"}}>
       <div style={{padding:"10px 0 4px",textAlign:"center"}}><div style={{width:40,height:5,background:"#ddd",borderRadius:3,margin:"0 auto"}}/></div>
       <div style={{padding:"0 18px"}}>
-        {(function(){var cc=CC[getCat(sel)]||{bg:"#666",i:"\u26a1",l:"EVENTO"};return <Bdg bg={cc.bg}>{cc.i} {cc.l}</Bdg>})()}
-        <div style={{fontFamily:P,fontStyle:"italic",fontSize:26,textTransform:"uppercase",lineHeight:1.1,marginTop:8}}>{sel.ti||sel.title}</div>
-        <div style={{fontSize:14,color:"#555",lineHeight:1.7,marginTop:8}}>{sel.de||sel.description}</div>
+        {(function(){var cc=CC[sel.category]||{bg:"#666",i:"\u26a1",l:"EVENTO"};return <Bdg bg={cc.bg}>{cc.i} {cc.l}</Bdg>})()}
+        <div style={{fontFamily:P,fontStyle:"italic",fontSize:26,textTransform:"uppercase",lineHeight:1.1,marginTop:8}}>{sel.title}</div>
+        <div style={{fontSize:14,color:"#555",lineHeight:1.7,marginTop:8}}>{sel.description}</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
-          <span style={{background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:600}}>{"\ud83d\udccd"} {sel.lo||sel.location}</span>
-          {(sel.tm||sel.time) && <span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>{"\u23f0"} {sel.tm||sel.time}</span>}
-          {(sel.or||sel.orari) && <span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>{"\ud83d\udd50"} {sel.or||sel.orari}</span>}
-          {sel.fr && <span style={{background:"#10B981",color:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:700}}>GRATIS</span>}
+          <span style={{background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:600}}>{"\ud83d\udccd"} {sel.location}</span>
+          {(sel.time) && <span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>{"\u23f0"} {sel.time}</span>}
+          {(sel.orari) && <span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>{"\ud83d\udd50"} {sel.orari}</span>}
+          {sel.free && <span style={{background:"#10B981",color:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:700}}>GRATIS</span>}
         </div>
         <div style={{display:"flex",gap:10,marginTop:14}}>
-          <button onClick={function(){window.open("https://maps.google.com/maps?q="+encodeURIComponent((sel.lo||sel.location)+(c?", "+c.n:"")),"_blank")}} style={{flex:1,background:"#1a1a1a",color:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:14,padding:13,fontFamily:P,fontStyle:"italic",fontSize:15,cursor:"pointer"}}>MAPPA</button>
+          <button onClick={function(){window.open("https://maps.google.com/maps?q="+encodeURIComponent((sel.location)+(c?", "+c.n:"")),"_blank")}} style={{flex:1,background:"#1a1a1a",color:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:14,padding:13,fontFamily:P,fontStyle:"italic",fontSize:15,cursor:"pointer"}}>MAPPA</button>
           <button onClick={function(){tgSv(sel.id)}} style={{flex:1,background:sv.includes(sel.id)?"#DC2626":"#FCD34D",color:sv.includes(sel.id)?"#fff":"#1a1a1a",border:"3px solid #1a1a1a",borderRadius:14,padding:13,fontFamily:P,fontStyle:"italic",fontSize:15,cursor:"pointer"}}>{sv.includes(sel.id)?"\u2713 SALVATO":"\u2764\ufe0f SALVA"}</button>
         </div>
         <div style={{display:"flex",gap:10,marginTop:8}}>
-          <button onClick={function(){window.open("https://wa.me/?text="+encodeURIComponent((sel.ti||sel.title)+"\n"+(sel.lo||sel.location)+"\n"+((sel.tm||sel.time||sel.or||sel.orari)||"")+"\n\nScoperto su EVENTOON!"),"_blank")}} style={{flex:1,background:"#25D366",color:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:P,fontStyle:"italic",fontSize:13,cursor:"pointer"}}>WHATSAPP</button>
-          <button onClick={function(){if(navigator.clipboard)navigator.clipboard.writeText((sel.ti||sel.title)+" \u2014 "+(sel.lo||sel.location)+" | EVENTOON!");alert("Copiato!")}} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:P,fontStyle:"italic",fontSize:13,cursor:"pointer"}}>{"\ud83d\udccb"} COPIA</button>
+          <button onClick={function(){window.open("https://wa.me/?text="+encodeURIComponent((sel.title)+"\n"+(sel.location)+"\n"+((sel.time||sel.orari)||"")+"\n\nScoperto su EVENTOON!"),"_blank")}} style={{flex:1,background:"#25D366",color:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:P,fontStyle:"italic",fontSize:13,cursor:"pointer"}}>WHATSAPP</button>
+          <button onClick={function(){if(navigator.clipboard)navigator.clipboard.writeText((sel.title)+" \u2014 "+(sel.location)+" | EVENTOON!");alert("Copiato!")}} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:P,fontStyle:"italic",fontSize:13,cursor:"pointer"}}>{"\ud83d\udccb"} COPIA</button>
         </div>
       </div>
     </div>
