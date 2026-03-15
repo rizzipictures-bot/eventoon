@@ -1,0 +1,17 @@
+{
+  "name": "EVENTOON! La tua città a fumetti",
+  "short_name": "EVENTOON!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFEF2",
+  "theme_color": "#1A1A1A",
+  "description": "Aggregatore di eventi locali in stile fumetto per l'Emilia-Romagna",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

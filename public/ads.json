@@ -1,0 +1,53 @@
+{
+  "lastUpdated": "2026-03-14T08:00:00",
+  "ads": [
+    {
+      "id": "ad-001",
+      "type": "ristorante",
+      "title": "Trattoria La Brace — Menu Degustazione",
+      "business": "Trattoria La Brace",
+      "location": "Via Roma 45, Reggio Emilia",
+      "cityKey": "reggio-emilia",
+      "description": "Menu degustazione emiliano: tortelli, gnocco fritto, lambrusco. Prenota il tuo tavolo per il weekend!",
+      "image": "🍝",
+      "color": "#B85042",
+      "url": "https://example.com",
+      "dateFrom": "2026-03-10",
+      "dateTo": "2026-03-24",
+      "plan": "2-settimane",
+      "status": "active"
+    },
+    {
+      "id": "ad-002",
+      "type": "corso",
+      "title": "Workshop Fotografia Street — 5 Lezioni",
+      "business": "HomeforPhotography",
+      "location": "Spazio Gerra, Reggio Emilia",
+      "cityKey": "reggio-emilia",
+      "description": "Impara la street photography con un professionista. 5 lezioni pratiche in centro storico. Posti limitati.",
+      "image": "📷",
+      "color": "#264653",
+      "url": "https://example.com",
+      "dateFrom": "2026-03-14",
+      "dateTo": "2026-04-14",
+      "plan": "1-mese",
+      "status": "active"
+    },
+    {
+      "id": "ad-003",
+      "type": "locale",
+      "title": "Jazz Club RE — Aperitivo & Live Music",
+      "business": "Jazz Club Reggio",
+      "location": "Via Emilia San Pietro 12",
+      "cityKey": "reggio-emilia",
+      "description": "Ogni venerdì e sabato: aperitivo dalle 19 + concerto jazz live dalle 21:30. Ingresso libero.",
+      "image": "🎷",
+      "color": "#7B2D8E",
+      "url": "https://example.com",
+      "dateFrom": "2026-03-01",
+      "dateTo": "2026-03-31",
+      "plan": "1-mese",
+      "status": "active"
+    }
+  ]
+}
