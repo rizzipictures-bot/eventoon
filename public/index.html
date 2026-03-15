@@ -7,500 +7,315 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#FFFDF7">
 <meta name="apple-mobile-web-app-title" content="EVENTOON!">
-<title>EVENTOON! La tua città a fumetti</title>
+<title>EVENTOON!</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#FFFDF7;font-family:'Fredoka',sans-serif;overflow-x:hidden}
 ::-webkit-scrollbar{display:none}
-@keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-input,textarea,select{font-family:'Comic Neue',cursive;font-size:14px;border:2.5px solid #ddd;border-radius:14px;padding:12px 16px;width:100%;margin-bottom:10px;background:#fff;outline:none;box-sizing:border-box;transition:border .15s}
-input:focus,textarea:focus,select:focus{border-color:#E63946!important}
+@keyframes si{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.inp{font-family:'Comic Neue',cursive;font-size:14px;border:2.5px solid #ddd;border-radius:14px;padding:12px 16px;width:100%;margin-bottom:10px;background:#fff;outline:none;box-sizing:border-box}
+.inp:focus{border-color:#E63946 !important}
+.cn{font-family:'Comic Neue',cursive}
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script type="text/babel">
-const {useState,useEffect}=React;
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState, useEffect} = React;
 
-// ══════════════════════════════════════════
-// STRIPE — Sostituisci con i tuoi link
-// ══════════════════════════════════════════
-const STRIPE_LINKS={
-  "1-settimana":"https://buy.stripe.com/INSERISCI_LINK_1W",
-  "2-settimane":"https://buy.stripe.com/INSERISCI_LINK_2W",
-  "1-mese":"https://buy.stripe.com/INSERISCI_LINK_1M",
+const CITIES = {
+  "reggio-emilia":{name:"Reggio Emilia",short:"RE",em:"\u{1F3DB}\uFE0F",cl:"#E63946"},
+  "bologna":{name:"Bologna",short:"BO",em:"\u{1F3D7}\uFE0F",cl:"#7B2D8E"},
+  "parma":{name:"Parma",short:"PR",em:"\u{1F3AD}",cl:"#264653"},
+  "modena":{name:"Modena",short:"MO",em:"\u{1F3CE}\uFE0F",cl:"#E76F51"},
+  "ferrara":{name:"Ferrara",short:"FE",em:"\u{1F3F0}",cl:"#606C38"},
+  "ravenna":{name:"Ravenna",short:"RA",em:"\u2728",cl:"#0077B6"},
+  "rimini":{name:"Rimini",short:"RN",em:"\u{1F3D6}\uFE0F",cl:"#F4A261"},
+  "piacenza":{name:"Piacenza",short:"PC",em:"\u26EA",cl:"#9B5DE5"},
 };
 
-const CITIES={
-  "reggio-emilia":{name:"Reggio Emilia",short:"RE",emoji:"🏛️",color:"#E63946"},
-  "bologna":{name:"Bologna",short:"BO",emoji:"🏗️",color:"#7B2D8E"},
-  "parma":{name:"Parma",short:"PR",emoji:"🎭",color:"#264653"},
-  "modena":{name:"Modena",short:"MO",emoji:"🏎️",color:"#E76F51"},
-  "ferrara":{name:"Ferrara",short:"FE",emoji:"🏰",color:"#606C38"},
-  "ravenna":{name:"Ravenna",short:"RA",emoji:"✨",color:"#0077B6"},
-  "rimini":{name:"Rimini",short:"RN",emoji:"🏖️",color:"#F4A261"},
-  "piacenza":{name:"Piacenza",short:"PC",emoji:"⛪",color:"#9B5DE5"},
-};
 const CATS=[
-  {id:"tutti",label:"Tutti",icon:"💥",color:"#1a1a1a"},
-  {id:"sport",label:"Sport",icon:"🏃",color:"#2D6A4F"},
-  {id:"musica",label:"Musica",icon:"🎵",color:"#7B2D8E"},
-  {id:"mercati",label:"Mercati",icon:"🏺",color:"#C77B30"},
-  {id:"arte",label:"Arte",icon:"🖼️",color:"#264653"},
-  {id:"food",label:"Food",icon:"🍕",color:"#E63946"},
-  {id:"famiglia",label:"Family",icon:"👶",color:"#00B4D8"},
-];
-const AD_TYPES=[
-  {id:"corso",label:"Corso / Workshop",icon:"📚",color:"#264653"},
-  {id:"concerto",label:"Concerto",icon:"🎵",color:"#7B2D8E"},
-  {id:"locale",label:"Locale / Bar",icon:"🍸",color:"#E76F51"},
-  {id:"ristorante",label:"Ristorante",icon:"🍝",color:"#B85042"},
-  {id:"workshop",label:"Laboratorio",icon:"🎨",color:"#2A9D8F"},
-];
-const PLANS=[
-  {id:"1-settimana",label:"1 Settimana",price:"19",desc:"Evento singolo, serata speciale",days:7},
-  {id:"2-settimane",label:"2 Settimane",price:"29",desc:"Workshop, corsi brevi",days:14,popular:true},
-  {id:"1-mese",label:"1 Mese",price:"49",desc:"Ristoranti, locali, corsi",days:30},
+  {id:"tutti",label:"Tutti",cl:"#1a1a1a"},
+  {id:"sport",label:"Sport",cl:"#2D6A4F"},
+  {id:"musica",label:"Musica",cl:"#7B2D8E"},
+  {id:"mercati",label:"Mercati",cl:"#C77B30"},
+  {id:"arte",label:"Arte",cl:"#264653"},
+  {id:"food",label:"Food",cl:"#E63946"},
+  {id:"famiglia",label:"Family",cl:"#00B4D8"},
 ];
 
-function daysLeft(dt){return Math.ceil((new Date(dt)-new Date())/864e5)}
-function isOpen(m,d){return new Date(d)>=new Date(m.dateFrom)&&new Date(d)<=new Date(m.dateTo)}
-function getDays(){const t=new Date(),r=[];for(let i=0;i<3;i++){const d=new Date(t);d.setDate(d.getDate()+i);r.push({id:d.toISOString().slice(0,10),label:i===0?"Oggi":i===1?"Domani":d.toLocaleDateString("it",{weekday:"long"}).replace(/^\w/,c=>c.toUpperCase()),sub:d.toLocaleDateString("it",{weekday:"short",day:"numeric",month:"short"})});}return r;}
+function dL(dt){return Math.ceil((new Date(dt)-new Date())/864e5)}
+function isO(m,d){return new Date(d)>=new Date(m.dateFrom)&&new Date(d)<=new Date(m.dateTo)}
+function gD(){
+  const t=new Date(),r=[];
+  for(let i=0;i<3;i++){
+    const d=new Date(t);d.setDate(d.getDate()+i);
+    const lb=i===0?"Oggi":i===1?"Domani":d.toLocaleDateString("it",{weekday:"long"});
+    r.push({id:d.toISOString().slice(0,10),label:lb,sub:d.toLocaleDateString("it",{weekday:"short",day:"numeric",month:"short"})});
+  }
+  return r;
+}
 
-// SVG Tab icons
-function TabIcon({type,active}){
-  const col=active?"#FFFFFF":"rgba(255,255,255,0.45)";
+function TI({type,active}){
+  const c=active?"#FFF":"rgba(255,255,255,0.4)";
   const s={width:26,height:26,display:"block"};
-  if(type==="home")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>;
-  if(type==="search")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2.2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg>;
-  if(type==="promote")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>;
-  if(type==="publish")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill={col}/><path d="M21 15l-5-5L5 21"/></svg>;
-  if(type==="profile")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={col} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-  return null;
+  if(type==="home")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>;
+  if(type==="search")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg>;
+  if(type==="promote")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>;
+  if(type==="publish")return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill={c}/><path d="M21 15l-5-5L5 21"/></svg>;
+  return <svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 }
 
-function Pill({children,bg="#FFE66D",border="#E8D44D",color="#1a1a1a",style:s}){
-  return <span style={{background:bg,border:"1.5px solid "+border,borderRadius:20,padding:"3px 10px",fontSize:11,color,display:"inline-flex",alignItems:"center",gap:3,...s}}>{children}</span>;
+function Pi({children,bg,bd,cl,style}){
+  return <span style={{background:bg||"#FFE66D",border:"1.5px solid "+(bd||"#E8D44D"),borderRadius:20,padding:"3px 10px",fontSize:11,color:cl||"#1a1a1a",display:"inline-flex",alignItems:"center",gap:3,...(style||{})}}>{children}</span>;
 }
 
-// Ad Card
-function AdCard({ad,onClick}){
-  return(
-    <div onClick={()=>onClick?.(ad)} style={{border:"2.5px solid #D4A053",borderRadius:16,overflow:"hidden",background:"#fff",boxShadow:"0 4px 12px rgba(212,160,83,0.25)",cursor:"pointer",position:"relative"}}>
-      <div style={{position:"absolute",top:8,right:8,background:"linear-gradient(135deg,#FFE66D,#F4A261)",padding:"3px 12px",borderRadius:20,fontSize:10,letterSpacing:.8,color:"#7B5B2A",fontWeight:"bold",zIndex:2}}>⭐ SPONSOR</div>
-      <div style={{background:ad.color,padding:"14px 16px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(255,255,255,.06) 6px,rgba(255,255,255,.06) 7px)",pointerEvents:"none"}}/>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{flex:1,paddingRight:10}}><div style={{fontSize:15,fontWeight:600,color:"#fff",lineHeight:1.2}}>{ad.title}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"rgba(255,255,255,.8)",marginTop:4}}>📍 {ad.location}</div></div>
-          <div style={{fontSize:30,lineHeight:1,flexShrink:0}}>{ad.image}</div>
-        </div>
-      </div>
-      <div style={{padding:"12px 16px",background:"linear-gradient(180deg,#FFFDF7,#FFF8E1)"}}>
-        <div style={{fontFamily:"'Comic Neue',cursive",fontSize:12.5,color:"#555",lineHeight:1.5,marginBottom:8}}>{ad.description}</div>
-        <div style={{display:"flex",gap:6,alignItems:"center"}}><Pill bg="#FFF3CD" border="#D4A053" color="#7B5B2A">🏢 {ad.business}</Pill><span style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#C77B30",marginLeft:"auto"}}>Scopri →</span></div>
-      </div>
-    </div>
-  );
-}
-
-// Promote screen
-function PromoteScreen({city}){
-  const [step,setStep]=useState(0);
-  const [adType,setAdType]=useState("");
-  const [title,setTitle]=useState("");
-  const [business,setBusiness]=useState("");
-  const [location,setLocation]=useState("");
-  const [desc,setDesc]=useState("");
-  const [plan,setPlan]=useState("2-settimane");
-
-  if(step===0)return(
-    <div style={{padding:"16px 16px 0"}}>
-      <div style={{fontSize:22,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>📢 Promuovi la tua attività</div>
-      <div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:18}}>Raggiungi migliaia di persone a {CITIES[city]?.name}</div>
-      <div style={{borderRadius:18,overflow:"hidden",marginBottom:18,boxShadow:"0 4px 16px rgba(0,0,0,0.05)"}}>
-        <div style={{background:"#E63946",padding:"12px 16px",color:"#fff",fontSize:15}}>Come funziona</div>
-        <div style={{padding:16,background:"#fff"}}>{["Scegli la categoria","Compila i dettagli","Scegli durata (da €19)","Paga con carta o Apple Pay","Appari nel feed!"].map((s,i)=>(<div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"10px 0",borderBottom:i<4?"1px solid #f5f5f0":"none"}}><div style={{width:28,height:28,borderRadius:14,background:"#FFE66D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{i+1}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#555"}}>{s}</div></div>))}</div>
-      </div>
-      <div style={{display:"flex",gap:10,marginBottom:18}}>{PLANS.map(p=>(<div key={p.id} style={{flex:1,border:p.popular?"2.5px solid #E63946":"2px solid #eee",borderRadius:16,padding:12,textAlign:"center",background:p.popular?"#FFF0F0":"#fff",position:"relative"}}>{p.popular&&<div style={{position:"absolute",top:-9,left:"50%",transform:"translateX(-50%)",background:"#E63946",color:"#fff",fontSize:9,padding:"2px 10px",borderRadius:10}}>Popolare</div>}<div style={{fontSize:22,color:"#1a1a1a"}}>€{p.price}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#999",marginTop:2}}>{p.label}</div></div>))}</div>
-      <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Categorie ammesse</div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:18}}>{AD_TYPES.map(t=><div key={t.id} style={{background:t.color,color:"#fff",borderRadius:14,padding:"6px 14px",fontSize:12}}>{t.icon} {t.label}</div>)}</div>
-      <button onClick={()=>setStep(1)} style={{width:"100%",background:"#E63946",color:"#fff",border:"none",borderRadius:16,padding:16,fontSize:17,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(230,57,70,0.35)"}}>🚀 Crea la tua inserzione</button>
-    </div>
-  );
-
-  if(step===1)return(
-    <div style={{padding:"16px 16px 0"}}>
-      <div onClick={()=>setStep(0)} style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:12,cursor:"pointer"}}>← Indietro</div>
-      <div style={{fontSize:19,fontWeight:600,marginBottom:14}}>📝 Dettagli inserzione</div>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>Categoria *</div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>{AD_TYPES.map(t=><div key={t.id} onClick={()=>setAdType(t.id)} style={{background:adType===t.id?t.color:"#fff",color:adType===t.id?"#fff":"#1a1a1a",border:"2px solid "+(adType===t.id?t.color:"#eee"),borderRadius:14,padding:"7px 14px",fontSize:12,cursor:"pointer",transition:"all .12s",boxShadow:adType===t.id?"0 3px 10px rgba(0,0,0,0.15)":"none"}}>{t.icon} {t.label}</div>)}</div>
-      <input placeholder="Nome attività *" value={business} onChange={e=>setBusiness(e.target.value)}/>
-      <input placeholder="Titolo inserzione *" value={title} onChange={e=>setTitle(e.target.value)}/>
-      <input placeholder="📍 Indirizzo *" value={location} onChange={e=>setLocation(e.target.value)}/>
-      <textarea placeholder="Descrizione (max 150 car.) *" rows={3} style={{resize:"none"}} value={desc} onChange={e=>setDesc(e.target.value.slice(0,150))}/>
-      <div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#bbb",marginBottom:10,textAlign:"right",marginTop:-6}}>{desc.length}/150</div>
-      <div style={{border:"3px dashed #ddd",borderRadius:18,padding:24,textAlign:"center",background:"#fafaf5",marginBottom:14,cursor:"pointer"}}><div style={{fontSize:32,marginBottom:4}}>📷</div><div style={{fontSize:13,color:"#999"}}>Carica foto o logo</div></div>
-      <button onClick={()=>{if(adType&&title&&business&&desc)setStep(2)}} style={{width:"100%",background:adType&&title&&business&&desc?"#E63946":"#ddd",color:"#fff",border:"none",borderRadius:16,padding:14,fontSize:16,fontWeight:600,cursor:"pointer"}}>Avanti → Scegli piano</button>
-    </div>
-  );
-
-  if(step===2)return(
-    <div style={{padding:"16px 16px 0"}}>
-      <div onClick={()=>setStep(1)} style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:12,cursor:"pointer"}}>← Indietro</div>
-      <div style={{fontSize:19,fontWeight:600,marginBottom:14}}>💳 Scegli il piano</div>
-      {PLANS.map(p=>(<div key={p.id} onClick={()=>setPlan(p.id)} style={{border:plan===p.id?"2.5px solid #E63946":"2px solid #eee",borderRadius:18,padding:16,marginBottom:12,cursor:"pointer",background:plan===p.id?"#FFF0F0":"#fff",boxShadow:plan===p.id?"0 4px 16px rgba(230,57,70,0.15)":"none",position:"relative",transition:"all .15s"}}>{p.popular&&<div style={{position:"absolute",top:-9,right:14,background:"#E63946",color:"#fff",fontSize:10,padding:"2px 12px",borderRadius:12}}>Più scelto</div>}<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:16,fontWeight:600}}>{p.label}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"#888",marginTop:2}}>{p.desc}</div></div><div style={{fontSize:28,color:"#E63946",fontWeight:700}}>€{p.price}</div></div></div>))}
-      <div style={{border:"2px solid #eee",borderRadius:16,padding:14,marginBottom:14,background:"#fafafa"}}><div style={{fontSize:12,color:"#aaa",marginBottom:8}}>Pagamento sicuro</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}><Pill bg="#fff" border="#ddd" color="#555">💳 Visa/MC</Pill><Pill bg="#000" border="#000" color="#fff">🍎 Apple Pay</Pill><Pill bg="#fff" border="#ddd" color="#555">📱 Google Pay</Pill></div></div>
-      <button onClick={()=>setStep(3)} style={{width:"100%",background:"#E63946",color:"#fff",border:"none",borderRadius:16,padding:14,fontSize:16,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(230,57,70,0.3)"}}>Anteprima →</button>
-    </div>
-  );
-
-  if(step===3){const sp=PLANS.find(p=>p.id===plan),st=AD_TYPES.find(t=>t.id===adType);return(
-    <div style={{padding:"16px 16px 0"}}>
-      <div onClick={()=>setStep(2)} style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:12,cursor:"pointer"}}>← Indietro</div>
-      <div style={{fontSize:19,fontWeight:600,marginBottom:10}}>👁️ Anteprima</div>
-      <div style={{border:"2.5px solid #D4A053",borderRadius:16,overflow:"hidden",marginBottom:16,position:"relative"}}><div style={{position:"absolute",top:8,right:8,background:"linear-gradient(135deg,#FFE66D,#F4A261)",padding:"3px 12px",borderRadius:20,fontSize:10,color:"#7B5B2A",fontWeight:"bold",zIndex:2}}>⭐ SPONSOR</div><div style={{background:st?.color||"#264653",padding:14}}><div style={{fontSize:15,fontWeight:600,color:"#fff"}}>{(title||"Titolo").toUpperCase()}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"rgba(255,255,255,.8)",marginTop:3}}>📍 {location||"Indirizzo"}</div></div><div style={{padding:"12px 14px",background:"linear-gradient(180deg,#FFFDF7,#FFF8E1)"}}><div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"#555",marginBottom:6}}>{desc||"Descrizione"}</div><Pill bg="#FFF3CD" border="#D4A053" color="#7B5B2A">🏢 {business||"Attività"}</Pill></div></div>
-      <div style={{border:"2px solid #eee",borderRadius:18,padding:16,background:"#fff",marginBottom:16}}>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Riepilogo</div>
-        {[["Categoria",st?.label],["Attività",business],["Piano",sp?.label],["Durata",sp?.days+" giorni"],["Città",CITIES[city]?.name]].map(([k,v],i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<4?"1px solid #f5f5f0":"none"}}><span style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#888"}}>{k}</span><span style={{fontSize:13,fontWeight:600}}>{v}</span></div>))}
-        <div style={{display:"flex",justifyContent:"space-between",paddingTop:12,marginTop:4}}><span style={{fontSize:18,fontWeight:600}}>Totale</span><span style={{fontSize:28,color:"#E63946",fontWeight:700}}>€{sp?.price}</span></div>
-      </div>
-      <button onClick={()=>{const u=STRIPE_LINKS[plan];if(u&&!u.includes("INSERISCI")){window.location.href=u}else{alert("Configura i Payment Link Stripe — vedi GUIDA-STRIPE.md")}}} style={{width:"100%",background:"#1a1a1a",color:"#FFE66D",border:"none",borderRadius:16,padding:16,fontSize:17,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}>💳 Paga €{sp?.price} e pubblica</button>
-      <div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#bbb",textAlign:"center",marginTop:10}}>Pagamento sicuro via Stripe</div>
-    </div>);}
-  return null;
-}
-
-// ══════════════════════════════════════════
-// MAIN APP
-// ══════════════════════════════════════════
 function App(){
-  const [events,setEvents]=useState([]);
+  const [ev,setEv]=useState([]);
   const [ads,setAds]=useState([]);
   const [city,setCity]=useState("reggio-emilia");
   const [cat,setCat]=useState("tutti");
-  const [days]=useState(getDays);
-  const [day,setDay]=useState(getDays()[0].id);
-  const [showCities,setShowCities]=useState(false);
-  const [selected,setSelected]=useState(null);
+  const [days]=useState(gD);
+  const [day,setDay]=useState(gD()[0].id);
+  const [menu,setMenu]=useState(false);
+  const [sel,setSel]=useState(null);
   const [tab,setTab]=useState("home");
-  const [updated,setUpdated]=useState("");
-  const [searchQ,setSearchQ]=useState("");
+  const [upd,setUpd]=useState("");
+  const [sq,setSq]=useState("");
 
   useEffect(()=>{
-    fetch("events.json").then(r=>r.json()).then(d=>{setEvents(d.events||[]);setUpdated(d.lastUpdated||"")}).catch(()=>{});
+    fetch("events.json").then(r=>r.json()).then(d=>{setEv(d.events||[]);setUpd(d.lastUpdated||"")}).catch(()=>{});
     fetch("ads.json").then(r=>r.json()).then(d=>setAds(d.ads||[])).catch(()=>{});
   },[]);
 
   const c=CITIES[city]||CITIES["reggio-emilia"];
-  const cityAds=ads.filter(a=>a.cityKey===city&&a.status==="active"&&new Date()>=new Date(a.dateFrom)&&new Date()<=new Date(a.dateTo));
-  const mostre=events.filter(e=>e.type==="mostra"&&e.cityKey===city&&isOpen(e,day)&&(cat==="tutti"||cat==="arte"||e.category===cat));
-  const eventi=events.filter(e=>e.type==="evento"&&e.cityKey===city&&e.date===day&&(cat==="tutti"||e.category===cat));
-  const total=mostre.length+eventi.length;
-  const countDay=d=>events.filter(e=>(e.type==="evento"&&e.cityKey===city&&e.date===d)||(e.type==="mostra"&&e.cityKey===city&&isOpen(e,d))).length;
+  const cAds=ads.filter(a=>a.cityKey===city&&a.status==="active");
+  const mos=ev.filter(e=>e.type==="mostra"&&e.cityKey===city&&isO(e,day)&&(cat==="tutti"||cat==="arte"||e.category===cat));
+  const evd=ev.filter(e=>e.type==="evento"&&e.cityKey===city&&e.date===day&&(cat==="tutti"||e.category===cat));
+  const tot=mos.length+evd.length;
+  const allC=ev.filter(e=>e.cityKey===city);
+  const sRes=sq.length>=2?allC.filter(e=>(e.title+" "+e.description+" "+(e.location||"")).toLowerCase().indexOf(sq.toLowerCase())>=0):allC;
+
+  function cD(d){return ev.filter(e=>(e.type==="evento"&&e.cityKey===city&&e.date===d)||(e.type==="mostra"&&e.cityKey===city&&isO(e,d))).length}
 
   return(
-<div style={{minHeight:"100vh",background:"#FFFDF7",display:"flex",flexDirection:"column",position:"relative"}}>
-  <div style={{position:"fixed",inset:0,background:'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'1\' fill=\'%23000\' opacity=\'.012\'/%3E%3C/svg%3E")',pointerEvents:"none",zIndex:0}}/>
+<div style={{minHeight:"100vh",background:"#FFFDF7",display:"flex",flexDirection:"column"}}>
 
-  {/* HEADER */}
+  {/* HEAD */}
   <div style={{position:"sticky",top:0,zIndex:50,background:"#FFFDF7",borderBottom:"2px solid #eee",paddingTop:"env(safe-area-inset-top,12px)"}}>
     <div style={{padding:"12px 16px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div onClick={()=>setTab("home")} style={{fontSize:28,fontWeight:700,color:"#1a1a1a",cursor:"pointer"}}><span style={{color:"#E63946"}}>E</span>VENTOON<span style={{color:"#FFE66D"}}>!</span></div>
-      <div onClick={()=>setShowCities(!showCities)} style={{background:c.color,color:"#fff",borderRadius:20,padding:"7px 16px",fontSize:14,fontWeight:500,boxShadow:"0 3px 12px "+c.color+"44",cursor:"pointer"}}>{c.emoji} {c.short} ▾</div>
+      <div onClick={()=>{setTab("home");setSel(null)}} style={{fontSize:28,fontWeight:700,cursor:"pointer"}}><span style={{color:"#E63946"}}>E</span>VENTOON<span style={{color:"#FFE66D"}}>!</span></div>
+      <div onClick={()=>setMenu(!menu)} style={{background:c.cl,color:"#fff",borderRadius:20,padding:"7px 16px",fontSize:14,fontWeight:500,cursor:"pointer"}}>{c.em} {c.short} &#9662;</div>
     </div>
   </div>
 
-  {/* CITY PICKER */}
-  {showCities&&<div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setShowCities(false)}>
-    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.35)",backdropFilter:"blur(4px)",animation:"fadeIn .15s"}}/>
-    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:60,right:16,background:"#fff",borderRadius:20,boxShadow:"0 12px 40px rgba(0,0,0,0.2)",width:240,overflow:"hidden",animation:"slideIn .2s"}}>
-      <div style={{padding:"14px 18px 8px",fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#bbb",letterSpacing:1}}>SCEGLI CITTÀ</div>
+  {/* CITY */}
+  {menu&&<div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setMenu(false)}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.35)",animation:"fi .15s"}}/>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:60,right:16,background:"#fff",borderRadius:20,boxShadow:"0 12px 40px rgba(0,0,0,0.2)",width:240,overflow:"hidden",animation:"si .2s"}}>
+      <div style={{padding:"14px 18px 8px",fontSize:11,color:"#bbb"}} className="cn">SCEGLI CITTA</div>
       {Object.entries(CITIES).map(([k,ci])=>(
-        <div key={k} onClick={()=>{setCity(k);setShowCities(false);setCat("tutti");setTab("home")}} style={{padding:"12px 18px",background:city===k?ci.color:"transparent",color:city===k?"#fff":"#1a1a1a",fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",gap:12,transition:"background .1s"}}>
-          <span style={{fontSize:20}}>{ci.emoji}</span>{ci.name}{city===k&&<span style={{marginLeft:"auto"}}>✓</span>}
+        <div key={k} onClick={()=>{setCity(k);setMenu(false);setCat("tutti");setTab("home")}} style={{padding:"12px 18px",background:city===k?ci.cl:"transparent",color:city===k?"#fff":"#1a1a1a",fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:20}}>{ci.em}</span>{ci.name}{city===k&&<span style={{marginLeft:"auto"}}>&#10003;</span>}
         </div>
       ))}
-      <div style={{height:8}}/>
     </div>
   </div>}
 
-  {/* CONTENT */}
+  {/* BODY */}
   <div style={{flex:1,overflowY:"auto",padding:"0 0 110px",WebkitOverflowScrolling:"touch",position:"relative",zIndex:1}}>
 
-    {tab==="home"&&<div style={{padding:"14px 16px 0"}}>
-      {/* Days */}
-      <div style={{display:"flex",gap:8,marginBottom:12}}>
-        {days.map(d=>(
-          <div key={d.id} onClick={()=>setDay(d.id)} style={{flex:1,textAlign:"center",padding:"10px 4px",background:day===d.id?c.color:"#fff",color:day===d.id?"#fff":"#1a1a1a",borderRadius:16,cursor:"pointer",position:"relative",boxShadow:day===d.id?"0 4px 14px "+c.color+"33":"0 2px 8px rgba(0,0,0,0.04)",transition:"all .15s"}}>
-            <div style={{fontSize:15,fontWeight:600}}>{d.label}</div>
-            <div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,opacity:.7}}>{d.sub}</div>
-            <div style={{position:"absolute",top:-6,right:-4,background:"#FFE66D",color:"#1a1a1a",borderRadius:12,minWidth:22,height:22,fontSize:11,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,0.1)"}}>{countDay(d.id)}</div>
-          </div>
-        ))}
+  {/* ===HOME=== */}
+  {tab==="home"&&<div style={{padding:"14px 16px 0"}}>
+    <div style={{display:"flex",gap:8,marginBottom:12}}>{days.map(d=>(
+      <div key={d.id} onClick={()=>setDay(d.id)} style={{flex:1,textAlign:"center",padding:"10px 4px",background:day===d.id?c.cl:"#fff",color:day===d.id?"#fff":"#1a1a1a",borderRadius:16,cursor:"pointer",position:"relative",boxShadow:day===d.id?"0 4px 14px "+c.cl+"33":"0 2px 8px rgba(0,0,0,0.04)"}}>
+        <div style={{fontSize:15,fontWeight:600}}>{d.label}</div>
+        <div className="cn" style={{fontSize:11,opacity:.7}}>{d.sub}</div>
+        <div style={{position:"absolute",top:-6,right:-4,background:"#FFE66D",borderRadius:12,minWidth:22,height:22,fontSize:11,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center"}}>{cD(d.id)}</div>
       </div>
-
-      {/* Cats */}
-      <div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:14,scrollbarWidth:"none"}}>
-        {CATS.map(ct=>(
-          <div key={ct.id} onClick={()=>setCat(ct.id)} style={{background:cat===ct.id?ct.color:"#fff",color:cat===ct.id?"#fff":"#666",borderRadius:20,padding:"7px 16px",fontSize:13,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,boxShadow:cat===ct.id?"0 3px 10px "+ct.color+"33":"0 1px 4px rgba(0,0,0,0.05)",transition:"all .15s"}}>{ct.icon} {ct.label}</div>
-        ))}
-      </div>
-
-      <div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:14}}>
-        💥 <strong style={{color:"#1a1a1a"}}>{total}</strong> eventi e mostre{cityAds.length>0&&<> + <strong style={{color:"#C77B30"}}>{cityAds.length}</strong> sponsor</>}
-      </div>
-
-      {/* Sponsored top */}
-      {cityAds.length>0&&<div style={{marginBottom:16}}><AdCard ad={cityAds[0]} onClick={setSelected}/></div>}
-
-      {/* MOSTRE */}
-      {mostre.length>0&&<>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:17,fontWeight:600}}>🖼️ Mostre in corso <span style={{fontFamily:"'Comic Neue',cursive",fontWeight:400,fontSize:14,color:"#999"}}>({mostre.length})</span></div>
-          <div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#ccc"}}>scorri →</div>
-        </div>
-        <div style={{display:"flex",gap:12,overflowX:"auto",marginBottom:18,paddingBottom:6,marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16,scrollbarWidth:"none"}}>
-          {mostre.map((m,i)=>{const dl=daysLeft(m.dateTo);const isNew=new Date(m.dateFrom)>=new Date(new Date().setDate(new Date().getDate()-7));return(
-            <div key={m.id} onClick={()=>setSelected(m)} style={{borderRadius:18,overflow:"hidden",background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.08)",cursor:"pointer",minWidth:265,maxWidth:285,flexShrink:0,animation:"slideIn .3s ease "+(i*.05)+"s both"}}>
-              <div style={{background:m.color,padding:"12px 16px",position:"relative",overflow:"hidden"}}>
-                <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(135deg,transparent,transparent 6px,rgba(255,255,255,.05) 6px,rgba(255,255,255,.05) 7px)",pointerEvents:"none"}}/>
-                <div style={{display:"flex",justifyContent:"space-between"}}>
-                  <div style={{flex:1,paddingRight:8}}><div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.2}}>{m.title}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"rgba(255,255,255,.75)",marginTop:4}}>📍 {m.location}</div></div>
-                  <div style={{fontSize:26,lineHeight:1}}>{m.image}</div>
-                </div>
-              </div>
-              <div style={{padding:"10px 16px 12px"}}>
-                <div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#666",lineHeight:1.5,marginBottom:8,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{m.description}</div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {isNew&&<Pill bg="#DCFCE7" border="#BBF7D0" color="#166534" style={{fontSize:10}}>✨ Nuova</Pill>}
-                  {dl<=14&&<Pill bg="#FEE2E2" border="#FECACA" color="#991B1B" style={{fontSize:10}}>⏳ {dl}gg</Pill>}
-                  {dl>14&&!isNew&&<Pill bg="#E0F2FE" border="#BAE6FD" color="#0369A1" style={{fontSize:10}}>fino {new Date(m.dateTo).toLocaleDateString("it",{day:"numeric",month:"short"})}</Pill>}
-                  {m.free&&<Pill bg="#FEF9C3" border="#FDE68A" color="#854D0E" style={{fontSize:10}}>Gratis</Pill>}
-                </div>
-              </div>
-            </div>);})}
-        </div>
-      </>}
-
-      {cityAds.length>1&&<div style={{marginBottom:16}}><AdCard ad={cityAds[1]} onClick={setSelected}/></div>}
-
-      {/* EVENTI */}
-      {eventi.length>0&&<>
-        <div style={{fontSize:17,fontWeight:600,marginBottom:10}}>⚡ Eventi {days.find(d=>d.id===day)?.label.toLowerCase()} <span style={{fontFamily:"'Comic Neue',cursive",fontWeight:400,fontSize:14,color:"#999"}}>({eventi.length})</span></div>
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {eventi.map((e,i)=>(
-            <React.Fragment key={e.id}>
-              <div onClick={()=>setSelected(e)} style={{borderRadius:18,overflow:"hidden",background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.07)",cursor:"pointer",animation:"slideIn .25s ease "+(i*.04)+"s both"}}>
-                <div style={{background:e.color,padding:"12px 16px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(255,255,255,.06) 7px,rgba(255,255,255,.06) 8px)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",justifyContent:"space-between"}}>
-                    <div style={{flex:1,paddingRight:10}}><div style={{fontSize:16,fontWeight:600,color:"#fff",lineHeight:1.2}}>{e.title}</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"rgba(255,255,255,.8)",marginTop:4}}>📍 {e.location}</div></div>
-                    <div style={{fontSize:30,lineHeight:1,flexShrink:0}}>{e.image}</div>
-                  </div>
-                </div>
-                <div style={{padding:"12px 16px"}}>
-                  <div style={{fontFamily:"'Comic Neue',cursive",fontSize:12.5,color:"#555",lineHeight:1.5,marginBottom:10,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{e.description}</div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-                    <Pill>⏰ {e.time}</Pill>
-                    {e.free&&<Pill bg="#DCFCE7" border="#BBF7D0" color="#166534">Gratis</Pill>}
-                    <span style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#ccc",marginLeft:"auto"}}>{e.source}</span>
-                  </div>
-                </div>
-                <div style={{borderTop:"1.5px solid #f5f5f0",display:"flex"}}>
-                  {[["❤️","Mi piace"],["📤","Condividi"],["🔖","Salva"]].map(([ico,lbl],j)=>(
-                    <div key={j} style={{flex:1,textAlign:"center",padding:"10px 0",fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#aaa",borderRight:j<2?"1px solid #f5f5f0":"none",cursor:"pointer"}}>{ico} {lbl}</div>
-                  ))}
-                </div>
-              </div>
-              {i===2&&cityAds.length>2&&<AdCard ad={cityAds[2]} onClick={setSelected}/>}
-            </React.Fragment>
-          ))}
-        </div>
-      </>}
-
-      {total===0&&<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:42,color:"#eee",fontWeight:700,marginBottom:8}}>Nada!</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:14,color:"#ccc"}}>Nessun evento trovato</div></div>}
-      {updated&&<div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#ddd",textAlign:"center",marginTop:20}}>Aggiornato: {new Date(updated).toLocaleString("it")}</div>}
+    ))}</div>
+    <div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:14,scrollbarWidth:"none"}}>{CATS.map(ct=>(
+      <div key={ct.id} onClick={()=>setCat(ct.id)} style={{background:cat===ct.id?ct.cl:"#fff",color:cat===ct.id?"#fff":"#666",borderRadius:20,padding:"7px 16px",fontSize:13,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,boxShadow:cat===ct.id?"0 3px 10px "+ct.cl+"33":"0 1px 4px rgba(0,0,0,0.05)"}}>{ct.label}</div>
+    ))}</div>
+    <div className="cn" style={{fontSize:13,color:"#999",marginBottom:14}}><strong style={{color:"#1a1a1a"}}>{tot}</strong> eventi e mostre</div>
+    {cAds.length>0&&<div onClick={()=>setSel(cAds[0])} style={{border:"2.5px solid #D4A053",borderRadius:16,overflow:"hidden",background:"#fff",boxShadow:"0 4px 12px rgba(212,160,83,0.25)",cursor:"pointer",position:"relative",marginBottom:16}}>
+      <div style={{position:"absolute",top:8,right:8,background:"linear-gradient(135deg,#FFE66D,#F4A261)",padding:"3px 12px",borderRadius:20,fontSize:10,color:"#7B5B2A",fontWeight:"bold",zIndex:2}}>SPONSOR</div>
+      <div style={{background:cAds[0].color,padding:"14px 16px"}}><div style={{fontSize:15,fontWeight:600,color:"#fff"}}>{cAds[0].title}</div><div className="cn" style={{fontSize:11,color:"rgba(255,255,255,.8)",marginTop:4}}>{cAds[0].location}</div></div>
+      <div style={{padding:"12px 16px",background:"linear-gradient(180deg,#FFFDF7,#FFF8E1)"}}><div className="cn" style={{fontSize:12.5,color:"#555",lineHeight:1.5}}>{cAds[0].description}</div></div>
     </div>}
-
-    {tab==="promote"&&<PromoteScreen city={city}/>}
-
-    {/* CERCA */}
-    {tab==="search"&&<div style={{padding:"16px 16px 0"}}>
-      <div style={{position:"relative",marginBottom:16}}>
-        <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 Cerca eventi, mostre, luoghi..." style={{fontSize:16,padding:"14px 18px",borderWidth:"2.5px",borderRadius:18}}/>
-      </div>
-
-      {searchQ.length<2&&<>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>🔥 Trending a {CITIES[city]?.name}</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
-          {["mezza maratona","mercatini","concerti","mostre fotografia","laboratori bambini","street food","antiquariato","jazz"].map(t=>(
-            <div key={t} onClick={()=>setSearchQ(t)} style={{background:"#fff",borderRadius:20,padding:"8px 16px",fontFamily:"'Comic Neue',cursive",fontSize:13,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>{t}</div>
-          ))}
-        </div>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📍 Filtra per distanza</div>
-        <div style={{display:"flex",gap:8,marginBottom:20}}>
-          {["500m","1 km","5 km","15 km","Provincia"].map((d,i)=>(
-            <div key={d} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:16,fontSize:12,cursor:"pointer",background:i===2?c.color:"#fff",color:i===2?"#fff":"#666",boxShadow:i===2?"0 3px 10px "+c.color+"33":"0 1px 4px rgba(0,0,0,0.05)",fontWeight:i===2?600:400}}>{d}</div>
-          ))}
-        </div>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📋 Tutti gli eventi a {CITIES[city]?.name}</div>
-      </>}
-
-      {searchQ.length>=2&&<div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:12}}>{events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())).length} risultati per "{searchQ}"</div>}
-
-      {(searchQ.length>=2?events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())):events.filter(e=>e.cityKey===city)).map(e=>(
-        <div key={e.id} onClick={()=>setSelected(e)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f0f0f0",cursor:"pointer"}}>
-          <div style={{width:44,height:44,borderRadius:14,background:e.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{e.image}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:14,fontWeight:600,lineHeight:1.2}}>{e.title}</div>
-            <div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#999",marginTop:2}}>📍 {e.location} {e.time?("· "+e.time):""}</div>
+    {mos.length>0&&<div>
+      <div style={{fontSize:17,fontWeight:600,marginBottom:10}}>Mostre ({mos.length}) <span className="cn" style={{fontWeight:400,fontSize:11,color:"#ccc"}}>scorri &rarr;</span></div>
+      <div style={{display:"flex",gap:12,overflowX:"auto",marginBottom:18,paddingBottom:6,marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16,scrollbarWidth:"none"}}>{mos.map(m=>{const dl=dL(m.dateTo);return(
+        <div key={m.id} onClick={()=>setSel(m)} style={{borderRadius:18,overflow:"hidden",background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.08)",cursor:"pointer",minWidth:265,maxWidth:285,flexShrink:0}}>
+          <div style={{background:m.color,padding:"12px 16px"}}><div style={{display:"flex",justifyContent:"space-between"}}><div style={{flex:1,paddingRight:8}}><div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.2}}>{m.title}</div><div className="cn" style={{fontSize:10,color:"rgba(255,255,255,.75)",marginTop:4}}>{m.location}</div></div><div style={{fontSize:26,lineHeight:1}}>{m.image}</div></div></div>
+          <div style={{padding:"10px 16px 12px"}}><div className="cn" style={{fontSize:11,color:"#666",lineHeight:1.5,marginBottom:8}}>{m.description}</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {dl<=14&&<Pi bg="#FEE2E2" bd="#FECACA" cl="#991B1B" style={{fontSize:10}}>{dl}gg rimasti</Pi>}
+              {dl>14&&<Pi bg="#E0F2FE" bd="#BAE6FD" cl="#0369A1" style={{fontSize:10}}>fino {new Date(m.dateTo).toLocaleDateString("it",{day:"numeric",month:"short"})}</Pi>}
+              {m.free&&<Pi bg="#FEF9C3" bd="#FDE68A" cl="#854D0E" style={{fontSize:10}}>Gratis</Pi>}
+            </div>
           </div>
-          <div style={{fontSize:12,color:"#ccc"}}>→</div>
+        </div>)})}</div>
+    </div>}
+    {evd.length>0&&<div>
+      <div style={{fontSize:17,fontWeight:600,marginBottom:10}}>Eventi ({evd.length})</div>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>{evd.map(e=>(
+        <div key={e.id} onClick={()=>setSel(e)} style={{borderRadius:18,overflow:"hidden",background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.07)",cursor:"pointer"}}>
+          <div style={{background:e.color,padding:"12px 16px"}}><div style={{display:"flex",justifyContent:"space-between"}}><div style={{flex:1,paddingRight:10}}><div style={{fontSize:16,fontWeight:600,color:"#fff",lineHeight:1.2}}>{e.title}</div><div className="cn" style={{fontSize:11,color:"rgba(255,255,255,.8)",marginTop:4}}>{e.location}</div></div><div style={{fontSize:30,lineHeight:1,flexShrink:0}}>{e.image}</div></div></div>
+          <div style={{padding:"12px 16px"}}><div className="cn" style={{fontSize:12.5,color:"#555",lineHeight:1.5,marginBottom:10}}>{e.description}</div><div style={{display:"flex",gap:6}}><Pi>{e.time}</Pi>{e.free&&<Pi bg="#DCFCE7" bd="#BBF7D0" cl="#166534">Gratis</Pi>}<span className="cn" style={{fontSize:10,color:"#ccc",marginLeft:"auto"}}>{e.source}</span></div></div>
+          <div style={{borderTop:"1.5px solid #f5f5f0",display:"flex"}}><div className="cn" style={{flex:1,textAlign:"center",padding:"10px 0",fontSize:11,color:"#aaa",borderRight:"1px solid #f5f5f0"}}>Mi piace</div><div className="cn" style={{flex:1,textAlign:"center",padding:"10px 0",fontSize:11,color:"#aaa",borderRight:"1px solid #f5f5f0"}}>Condividi</div><div className="cn" style={{flex:1,textAlign:"center",padding:"10px 0",fontSize:11,color:"#aaa"}}>Salva</div></div>
         </div>
+      ))}</div>
+    </div>}
+    {tot===0&&<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:42,color:"#eee",fontWeight:700}}>Nada!</div></div>}
+    {upd&&<div className="cn" style={{fontSize:10,color:"#ddd",textAlign:"center",marginTop:20}}>Aggiornato: {new Date(upd).toLocaleString("it")}</div>}
+  </div>}
+
+  {/* ===SEARCH=== */}
+  {tab==="search"&&<div style={{padding:"16px 16px 0"}}>
+    <input className="inp" value={sq} onChange={e=>setSq(e.target.value)} placeholder="Cerca eventi, mostre, luoghi..." style={{fontSize:16,borderRadius:18,padding:"14px 18px"}} />
+    {sq.length<2&&<div>
+      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Trending a {c.name}</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>{["maratona","fotografia","mercatini","musica","BMX","danza","cioccolato","antiquariato"].map(t=>(
+        <div key={t} onClick={()=>setSq(t)} className="cn" style={{background:"#fff",borderRadius:20,padding:"8px 16px",fontSize:13,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>{t}</div>
+      ))}</div>
+      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Filtra per distanza</div>
+      <div style={{display:"flex",gap:8,marginBottom:20}}>{["500m","1 km","5 km","15 km","Provincia"].map((d,i)=>(
+        <div key={d} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:16,fontSize:12,cursor:"pointer",background:i===2?c.cl:"#fff",color:i===2?"#fff":"#666",fontWeight:i===2?600:400,boxShadow:i===2?"0 3px 10px "+c.cl+"33":"0 1px 4px rgba(0,0,0,0.05)"}}>{d}</div>
+      ))}</div>
+      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Tutti gli eventi ({allC.length})</div>
+    </div>}
+    {sq.length>=2&&<div className="cn" style={{fontSize:13,color:"#999",marginBottom:12}}>{sRes.length} risultati per "{sq}" <span onClick={()=>setSq("")} style={{color:"#E63946",cursor:"pointer",marginLeft:8}}>Cancella</span></div>}
+    {sRes.map(e=>(
+      <div key={e.id} onClick={()=>setSel(e)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f0f0f0",cursor:"pointer"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:e.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{e.image}</div>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:600,lineHeight:1.2}}>{e.title}</div><div className="cn" style={{fontSize:11,color:"#999",marginTop:3}}>{e.location}</div></div>
+        <div style={{color:"#ccc"}}>&rarr;</div>
+      </div>
+    ))}
+    {sq.length>=2&&sRes.length===0&&<div style={{textAlign:"center",padding:"40px 20px"}}><div style={{fontSize:36,color:"#eee",fontWeight:700}}>Nada!</div></div>}
+  </div>}
+
+  {/* ===PROMOTE=== */}
+  {tab==="promote"&&<div style={{padding:"16px 16px 0"}}>
+    <div style={{fontSize:22,fontWeight:700,marginBottom:4}}>Promuovi la tua attivita</div>
+    <div className="cn" style={{fontSize:13,color:"#999",marginBottom:18}}>Raggiungi migliaia di persone a {c.name}</div>
+    <div style={{borderRadius:18,overflow:"hidden",marginBottom:18,boxShadow:"0 4px 16px rgba(0,0,0,0.05)"}}>
+      <div style={{background:"#E63946",padding:"12px 16px",color:"#fff",fontSize:15}}>Come funziona</div>
+      <div style={{padding:16,background:"#fff"}}>{["Scegli la categoria","Compila i dettagli","Scegli durata (da 19 EUR)","Paga con carta o Apple Pay","Appari nel feed!"].map((s,i)=>(
+        <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"10px 0",borderBottom:i<4?"1px solid #f5f5f0":"none"}}><div style={{width:28,height:28,borderRadius:14,background:"#FFE66D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{i+1}</div><div className="cn" style={{fontSize:13,color:"#555"}}>{s}</div></div>
+      ))}</div>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:18}}>
+      <div style={{flex:1,border:"2px solid #eee",borderRadius:16,padding:12,textAlign:"center"}}><div style={{fontSize:22}}>19 EUR</div><div className="cn" style={{fontSize:10,color:"#999",marginTop:2}}>1 Settimana</div></div>
+      <div style={{flex:1,border:"2.5px solid #E63946",borderRadius:16,padding:12,textAlign:"center",background:"#FFF0F0",position:"relative"}}><div style={{position:"absolute",top:-9,left:"50%",transform:"translateX(-50%)",background:"#E63946",color:"#fff",fontSize:9,padding:"2px 10px",borderRadius:10}}>Popolare</div><div style={{fontSize:22}}>29 EUR</div><div className="cn" style={{fontSize:10,color:"#999",marginTop:2}}>2 Settimane</div></div>
+      <div style={{flex:1,border:"2px solid #eee",borderRadius:16,padding:12,textAlign:"center"}}><div style={{fontSize:22}}>49 EUR</div><div className="cn" style={{fontSize:10,color:"#999",marginTop:2}}>1 Mese</div></div>
+    </div>
+    <button style={{width:"100%",background:"#E63946",color:"#fff",border:"none",borderRadius:16,padding:16,fontSize:17,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 16px rgba(230,57,70,0.35)"}}>Crea la tua inserzione</button>
+  </div>}
+
+  {/* ===PUBLISH=== */}
+  {tab==="publish"&&<div style={{padding:"16px 16px 0"}}>
+    <div style={{fontSize:22,fontWeight:700,marginBottom:4}}>Pubblica un evento</div>
+    <div className="cn" style={{fontSize:13,color:"#999",marginBottom:18}}>Segnala un evento a {c.name}</div>
+    {[{bg:"#FFE66D",t:"Scatta o carica foto",d:"Volantino, manifesto, luogo",xp:"+5 XP"},{bg:"#E0F2FE",t:"Incolla un link",d:"L'AI estrae tutto",xp:"+3 XP"},{bg:"#FEF9C3",t:"Inserisci manualmente",d:"Compila titolo, luogo, data",xp:"+2 XP"}].map((m,i)=>(
+      <div key={i} style={{borderRadius:18,padding:16,marginBottom:12,background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.05)",display:"flex",gap:14,alignItems:"center",cursor:"pointer"}}>
+        <div style={{width:50,height:50,borderRadius:16,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700}}>{["CAM","URL","TXT"][i]}</div>
+        <div style={{flex:1}}><div style={{fontSize:15,fontWeight:600}}>{m.t}</div><div className="cn" style={{fontSize:12,color:"#888",marginTop:2}}>{m.d}</div></div>
+        <Pi bg="#DCFCE7" bd="#BBF7D0" cl="#166534" style={{fontSize:10}}>{m.xp}</Pi>
+      </div>
+    ))}
+    <div style={{borderRadius:18,padding:16,background:"#f9f9f5",marginTop:8}}>
+      <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Il tuo livello: Reporter Junior</div>
+      <div style={{background:"#eee",borderRadius:10,height:10,overflow:"hidden",marginBottom:6}}><div style={{background:"linear-gradient(90deg,#E63946,#FFE66D)",height:"100%",width:"35%",borderRadius:10}}/></div>
+      <div className="cn" style={{fontSize:10,color:"#bbb"}}>35/100 XP</div>
+    </div>
+  </div>}
+
+  {/* ===PROFILE=== */}
+  {tab==="profile"&&<div style={{padding:"16px 16px 0"}}>
+    <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",marginBottom:16}}>
+      <div style={{background:c.cl,padding:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:56,height:56,borderRadius:"50%",border:"3px solid #fff",background:"#FFE66D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700}}>P</div>
+          <div><div style={{fontSize:20,fontWeight:700,color:"#fff"}}>Il tuo profilo</div><div style={{background:"rgba(255,255,255,0.2)",borderRadius:12,padding:"3px 12px",fontSize:11,color:"#fff",display:"inline-block",marginTop:4}}>Reporter Junior</div></div>
+        </div>
+      </div>
+      <div style={{padding:16,background:"#fff",display:"flex",justifyContent:"space-around"}}>
+        {[["12","Eventi"],["35","XP"],["89","Likes"],["23","Share"]].map(([n,l],i)=>(
+          <div key={i} style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:700}}>{n}</div><div className="cn" style={{fontSize:10,color:"#999"}}>{l}</div></div>
+        ))}
+      </div>
+    </div>
+    <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Badge</div>
+    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+      {[["CAM","Prima foto",true],["5","5 eventi",true],["7d","Streak",false],["TOP","Top Rep.",false],["50","50 likes",false],["3C","3 citta",false]].map(([i,l,ok],j)=>(
+        <div key={j} style={{borderRadius:16,padding:"10px 12px",textAlign:"center",opacity:ok?1:.3,background:ok?"#FFE66D":"#f0f0f0",minWidth:70}}><div style={{fontSize:16,fontWeight:700}}>{i}</div><div style={{fontSize:9,marginTop:2}}>{l}</div></div>
       ))}
-
-      {searchQ.length>=2&&events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"40px 20px"}}><div style={{fontSize:36,color:"#eee",fontWeight:700}}>Nada!</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#ccc",marginTop:6}}>Nessun risultato</div></div>}
-    </div>}
-
-    {/* PUBBLICA */}
-    {tab==="publish"&&<div style={{padding:"16px 16px 0"}}>
-      <div style={{fontSize:22,fontWeight:700,marginBottom:4}}>📸 Pubblica un evento</div>
-      <div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:18}}>Segnala un evento a {CITIES[city]?.name} e provincia</div>
-
-      <div onClick={()=>{}} style={{borderRadius:18,padding:16,marginBottom:12,background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.05)",cursor:"pointer",display:"flex",gap:14,alignItems:"center"}}>
-        <div style={{width:50,height:50,borderRadius:16,background:"#FFE66D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>📷</div>
-        <div style={{flex:1}}><div style={{fontSize:15,fontWeight:600}}>Scatta o carica foto</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"#888",marginTop:2}}>Volantino, manifesto, luogo — verrà fumettizzato!</div></div>
-        <Pill bg="#DCFCE7" border="#BBF7D0" color="#166534" style={{fontSize:10}}>+5 XP</Pill>
+    </div>
+    <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>Preferenze</div>
+    {["Notifiche vicini","Notifiche salvati","Tavola Domenica","Raggio: 15 km"].map((l,i)=>(
+      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #f0f0f0"}}>
+        <span className="cn" style={{fontSize:14,color:"#555"}}>{l}</span>
+        <div style={{width:44,height:24,borderRadius:12,background:i<3?"#4ADE80":"#ddd",position:"relative"}}><div style={{width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:i<3?23:3}}/></div>
       </div>
+    ))}
+    <div style={{borderRadius:18,padding:16,background:"#FFF0F0",marginTop:16,textAlign:"center"}}><div className="cn" style={{fontSize:13,color:"#E63946"}}>v1.0 EVENTOON!</div></div>
+  </div>}
 
-      <div onClick={()=>{}} style={{borderRadius:18,padding:16,marginBottom:12,background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.05)",cursor:"pointer",display:"flex",gap:14,alignItems:"center"}}>
-        <div style={{width:50,height:50,borderRadius:16,background:"#E0F2FE",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>🔗</div>
-        <div style={{flex:1}}><div style={{fontSize:15,fontWeight:600}}>Incolla un link</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"#888",marginTop:2}}>Hai trovato un evento online? L'AI estrae tutto.</div></div>
-        <Pill bg="#DCFCE7" border="#BBF7D0" color="#166534" style={{fontSize:10}}>+3 XP</Pill>
-      </div>
+  </div>{/* end body scroll */}
 
-      <div onClick={()=>{}} style={{borderRadius:18,padding:16,marginBottom:12,background:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.05)",cursor:"pointer",display:"flex",gap:14,alignItems:"center"}}>
-        <div style={{width:50,height:50,borderRadius:16,background:"#FEF9C3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>✏️</div>
-        <div style={{flex:1}}><div style={{fontSize:15,fontWeight:600}}>Inserisci manualmente</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"#888",marginTop:2}}>Compila titolo, luogo, data e descrizione.</div></div>
-        <Pill bg="#DCFCE7" border="#BBF7D0" color="#166534" style={{fontSize:10}}>+2 XP</Pill>
-      </div>
-
-      <div style={{borderRadius:18,padding:16,background:"#f9f9f5",marginTop:8}}>
-        <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>🏆 Il tuo livello: Reporter Junior</div>
-        <div style={{background:"#eee",borderRadius:10,height:10,overflow:"hidden",marginBottom:6}}>
-          <div style={{background:"linear-gradient(90deg,#E63946,#FFE66D)",height:"100%",width:"35%",borderRadius:10}}/>
-        </div>
-        <div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#bbb"}}>35/100 XP — Pubblica 7 eventi per diventare Reporter Senior 🎖️</div>
-      </div>
-    </div>}
-
-    {/* PROFILO */}
-    {tab==="profile"&&<div style={{padding:"16px 16px 0"}}>
-      <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",marginBottom:16}}>
-        <div style={{background:c.color,padding:20,position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(255,255,255,.05) 7px,rgba(255,255,255,.05) 8px)",pointerEvents:"none"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:14}}>
-            <div style={{width:56,height:56,borderRadius:"50%",border:"3px solid #fff",background:"#FFE66D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>👤</div>
-            <div>
-              <div style={{fontSize:20,fontWeight:700,color:"#fff"}}>Il tuo profilo</div>
-              <div style={{background:"rgba(255,255,255,0.2)",borderRadius:12,padding:"3px 12px",fontSize:11,color:"#fff",display:"inline-block",marginTop:4}}>🎖️ Reporter Junior — {CITIES[city]?.name}</div>
-            </div>
-          </div>
-        </div>
-        <div style={{padding:16,background:"#fff",display:"flex",justifyContent:"space-around"}}>
-          {[{n:"12",l:"Eventi"},{n:"35",l:"XP"},{n:"89",l:"Likes"},{n:"23",l:"Condivisioni"}].map((s,i)=>(
-            <div key={i} style={{textAlign:"center"}}>
-              <div style={{fontSize:22,fontWeight:700,color:"#1a1a1a"}}>{s.n}</div>
-              <div style={{fontFamily:"'Comic Neue',cursive",fontSize:10,color:"#999"}}>{s.l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>🎖️ Badge</div>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-        {[{i:"📷",l:"Prima foto",ok:true},{i:"🏃",l:"5 eventi",ok:true},{i:"🔥",l:"Streak 7gg",ok:false},{i:"🏆",l:"Top Reporter",ok:false},{i:"❤️",l:"50 likes",ok:false},{i:"🌍",l:"3 città",ok:false}].map((b,j)=>(
-          <div key={j} style={{borderRadius:16,padding:"10px 12px",textAlign:"center",opacity:b.ok?1:.3,background:b.ok?"#FFE66D":"#f0f0f0",minWidth:75,boxShadow:b.ok?"0 3px 10px rgba(255,230,109,0.3)":"none"}}>
-            <div style={{fontSize:22}}>{b.i}</div>
-            <div style={{fontSize:10,marginTop:2,fontWeight:500}}>{b.l}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>⚙️ Preferenze</div>
-      {[{l:"Notifiche eventi vicini",on:true},{l:"Notifiche eventi salvati",on:true},{l:"Tavola della Domenica",on:true},{l:"Raggio di ricerca: 15 km",on:null}].map((p,i)=>(
-        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0",borderBottom:"1px solid #f0f0f0"}}>
-          <span style={{fontFamily:"'Comic Neue',cursive",fontSize:14,color:"#555"}}>{p.l}</span>
-          {p.on!==null?
-            <div style={{width:44,height:24,borderRadius:12,background:p.on?"#4ADE80":"#ddd",position:"relative",cursor:"pointer"}}>
-              <div style={{width:18,height:18,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:p.on?23:3,boxShadow:"0 1px 4px rgba(0,0,0,0.15)",transition:"left .15s"}}/>
-            </div>
-          :<span style={{fontSize:13,color:"#ccc"}}>▶</span>}
-        </div>
-      ))}
-
-      <div style={{borderRadius:18,padding:16,background:"#FFF0F0",marginTop:16,textAlign:"center"}}>
-        <div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#E63946"}}>Versione 1.0 — EVENTOON!</div>
-        <div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#ccc",marginTop:4}}>La tua città a fumetti 💥</div>
-      </div>
-    </div>}
-  </div>
-
-  {/* DETAIL SHEET */}
-  {selected&&<div style={{position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"flex-end"}}>
-    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",backdropFilter:"blur(4px)",animation:"fadeIn .15s"}} onClick={()=>setSelected(null)}/>
-    <div style={{position:"relative",zIndex:1,width:"100%",background:"#FFFDF7",borderRadius:"24px 24px 0 0",maxHeight:"85vh",overflowY:"auto",animation:"sheetUp .3s cubic-bezier(.32,.72,.37,1.05)",paddingBottom:"calc(24px + env(safe-area-inset-bottom,0px))"}}>
+  {/* DETAIL */}
+  {sel&&<div style={{position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"flex-end"}}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",animation:"fi .15s"}} onClick={()=>setSel(null)}/>
+    <div style={{position:"relative",zIndex:1,width:"100%",background:"#FFFDF7",borderRadius:"24px 24px 0 0",maxHeight:"85vh",overflowY:"auto",animation:"su .3s cubic-bezier(.32,.72,.37,1.05)",paddingBottom:24}}>
       <div style={{padding:"12px 0 6px",textAlign:"center"}}><div style={{width:40,height:5,background:"#ddd",borderRadius:3,margin:"0 auto"}}/></div>
-      <div style={{background:selected.color,padding:"20px 22px",margin:"4px 16px 0",borderRadius:20,position:"relative",overflow:"hidden",boxShadow:"0 6px 20px "+selected.color+"33"}}>
-        <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(45deg,transparent,transparent 7px,rgba(255,255,255,.05) 7px,rgba(255,255,255,.05) 8px)",pointerEvents:"none"}}/>
-        {selected.type==="mostra"&&<div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginBottom:4}}>🖼️ Mostra in corso</div>}
-        <div style={{fontSize:44,marginBottom:8}}>{selected.image}</div>
-        <div style={{fontSize:22,fontWeight:700,color:"#fff",lineHeight:1.15}}>{selected.title}</div>
-        {selected.business&&<div style={{fontFamily:"'Comic Neue',cursive",fontSize:12,color:"rgba(255,255,255,.75)",marginTop:6}}>🏢 {selected.business}</div>}
+      <div style={{background:sel.color,padding:"20px 22px",margin:"4px 16px 0",borderRadius:20}}>
+        {sel.type==="mostra"&&<div style={{fontSize:12,color:"rgba(255,255,255,.6)",marginBottom:4}}>Mostra in corso</div>}
+        <div style={{fontSize:44,marginBottom:8}}>{sel.image}</div>
+        <div style={{fontSize:22,fontWeight:700,color:"#fff",lineHeight:1.15}}>{sel.title}</div>
+        {sel.business&&<div className="cn" style={{fontSize:12,color:"rgba(255,255,255,.7)",marginTop:6}}>{sel.business}</div>}
       </div>
       <div style={{padding:"16px 20px 0"}}>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
-          <Pill style={{fontSize:12}}>📍 {selected.location}</Pill>
-          {selected.type==="mostra"&&selected.dateTo&&<>
-            <Pill bg="#E0F2FE" border="#BAE6FD" color="#0369A1" style={{fontSize:12}}>📅 fino al {new Date(selected.dateTo).toLocaleDateString("it",{day:"numeric",month:"long"})}</Pill>
-            {selected.orari&&<Pill bg="#fff" border="#ddd" color="#555" style={{fontSize:12}}>🕐 {selected.orari}</Pill>}
-          </>}
-          {selected.time&&<Pill style={{fontSize:12}}>⏰ {selected.time}</Pill>}
-          {selected.free&&<Pill bg="#DCFCE7" border="#BBF7D0" color="#166534" style={{fontSize:12}}>Gratis</Pill>}
+          <Pi style={{fontSize:12}}>{sel.location}</Pi>
+          {sel.dateTo&&<Pi bg="#E0F2FE" bd="#BAE6FD" cl="#0369A1" style={{fontSize:12}}>fino {new Date(sel.dateTo).toLocaleDateString("it",{day:"numeric",month:"long"})}</Pi>}
+          {sel.orari&&<Pi bg="#fff" bd="#ddd" cl="#555" style={{fontSize:12}}>{sel.orari}</Pi>}
+          {sel.time&&<Pi style={{fontSize:12}}>{sel.time}</Pi>}
+          {sel.free&&<Pi bg="#DCFCE7" bd="#BBF7D0" cl="#166534" style={{fontSize:12}}>Gratis</Pi>}
         </div>
-        <div style={{background:"#F0F7FF",borderRadius:18,padding:"14px 18px",marginBottom:16}}>
-          <div style={{fontFamily:"'Comic Neue',cursive",fontSize:14,lineHeight:1.7,color:"#333"}}>{selected.description}</div>
-        </div>
-        {selected.source&&<div style={{fontFamily:"'Comic Neue',cursive",fontSize:11,color:"#ccc",marginBottom:16}}>Fonte: {selected.source}</div>}
+        <div style={{background:"#F0F7FF",borderRadius:18,padding:"14px 18px",marginBottom:16}}><div className="cn" style={{fontSize:14,lineHeight:1.7,color:"#333"}}>{sel.description}</div></div>
+        {sel.source&&<div className="cn" style={{fontSize:11,color:"#ccc",marginBottom:16}}>Fonte: {sel.source}</div>}
         <div style={{display:"flex",gap:10,marginBottom:10}}>
-          <button style={{flex:1,background:selected.color,color:"#fff",border:"none",borderRadius:16,padding:14,fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 14px "+selected.color+"33"}}>🗺️ Mappa</button>
-          <button style={{flex:1,background:"#FFE66D",color:"#1a1a1a",border:"none",borderRadius:16,padding:14,fontSize:15,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 14px rgba(255,230,109,0.4)"}}>❤️ Salva</button>
+          <button style={{flex:1,background:sel.color,color:"#fff",border:"none",borderRadius:16,padding:14,fontSize:15,fontWeight:600,cursor:"pointer"}}>Mappa</button>
+          <button style={{flex:1,background:"#FFE66D",color:"#1a1a1a",border:"none",borderRadius:16,padding:14,fontSize:15,fontWeight:600,cursor:"pointer"}}>Salva</button>
         </div>
         <div style={{display:"flex",gap:10}}>
-          {[["#25D366","💬 WhatsApp"],["#E1306C","📸 Instagram"],["#1a1a1a","📋 Copia"]].map(([bg,label],i)=>(
-            <button key={i} style={{flex:1,background:bg,color:"#fff",border:"none",borderRadius:14,padding:11,fontSize:12,fontWeight:500,cursor:"pointer",boxShadow:"0 3px 10px "+bg+"33"}}>{label}</button>
-          ))}
+          <button style={{flex:1,background:"#25D366",color:"#fff",border:"none",borderRadius:14,padding:11,fontSize:12,cursor:"pointer"}}>WhatsApp</button>
+          <button style={{flex:1,background:"#E1306C",color:"#fff",border:"none",borderRadius:14,padding:11,fontSize:12,cursor:"pointer"}}>Instagram</button>
+          <button style={{flex:1,background:"#1a1a1a",color:"#fff",border:"none",borderRadius:14,padding:11,fontSize:12,cursor:"pointer"}}>Copia</button>
         </div>
       </div>
     </div>
   </div>}
 
-  {/* BOTTOM TAB BAR */}
-  <div style={{position:"fixed",bottom:0,left:0,right:0,background:"linear-gradient(180deg,#E63946 0%,#C62836 100%)",borderRadius:"22px 22px 0 0",display:"flex",justifyContent:"space-around",padding:"10px 8px 0",paddingBottom:"calc(10px + env(safe-area-inset-bottom,16px))",zIndex:60,boxShadow:"0 -4px 24px rgba(230,57,70,0.3)"}}>
-    {[{id:"home",type:"home",label:"Home"},{id:"search",type:"search",label:"Cerca"},{id:"promote",type:"promote",label:"Promuovi"},{id:"publish",type:"publish",label:"Pubblica"},{id:"profile",type:"profile",label:"Profilo"}].map(t=>(
-      <div key={t.id} onClick={()=>{setTab(t.id);setSelected(null)}} style={{textAlign:"center",cursor:"pointer",padding:"6px 4px 4px",borderRadius:14,background:tab===t.id?"rgba(255,255,255,0.2)":"transparent",minWidth:56,transition:"all .15s"}}>
-        <TabIcon type={t.type} active={tab===t.id}/>
-        <div style={{fontSize:10,fontWeight:tab===t.id?600:400,color:tab===t.id?"#fff":"rgba(255,255,255,0.5)",marginTop:3}}>{t.label}</div>
+  {/* TABS */}
+  <div style={{position:"fixed",bottom:0,left:0,right:0,background:"linear-gradient(180deg,#E63946,#C62836)",borderRadius:"22px 22px 0 0",display:"flex",justifyContent:"space-around",padding:"10px 8px 0",paddingBottom:"calc(10px + env(safe-area-inset-bottom,16px))",zIndex:60,boxShadow:"0 -4px 24px rgba(230,57,70,0.3)"}}>
+    {[["home","home","Home"],["search","search","Cerca"],["promote","promote","Promuovi"],["publish","publish","Pubblica"],["profile","profile","Profilo"]].map(([id,tp,lb])=>(
+      <div key={id} onClick={()=>{setTab(id);setSel(null)}} style={{textAlign:"center",cursor:"pointer",padding:"6px 4px 4px",borderRadius:14,background:tab===id?"rgba(255,255,255,0.2)":"transparent",minWidth:56}}>
+        <TI type={tp} active={tab===id}/>
+        <div style={{fontSize:10,fontWeight:tab===id?600:400,color:tab===id?"#fff":"rgba(255,255,255,0.5)",marginTop:3}}>{lb}</div>
       </div>
     ))}
   </div>
+
 </div>);
 }
 
