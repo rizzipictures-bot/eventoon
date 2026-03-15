@@ -191,6 +191,7 @@ function App(){
   const [selected,setSelected]=useState(null);
   const [tab,setTab]=useState("home");
   const [updated,setUpdated]=useState("");
+  const [searchQ,setSearchQ]=useState("");
 
   useEffect(()=>{
     fetch("events.json").then(r=>r.json()).then(d=>{setEvents(d.events||[]);setUpdated(d.lastUpdated||"")}).catch(()=>{});
@@ -333,26 +334,29 @@ function App(){
     {/* CERCA */}
     {tab==="search"&&<div style={{padding:"16px 16px 0"}}>
       <div style={{position:"relative",marginBottom:16}}>
-        <input id="searchInput" placeholder="🔍 Cerca eventi, mostre, luoghi..." style={{fontSize:16,padding:"14px 18px",borderWidth:"2.5px",borderRadius:18}} onInput={e=>{
-          const q=e.target.value.toLowerCase();
-          document.querySelectorAll('[data-searchitem]').forEach(el=>{el.style.display=el.dataset.searchitem.includes(q)||q.length<2?'flex':'none'});
-        }}/>
+        <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 Cerca eventi, mostre, luoghi..." style={{fontSize:16,padding:"14px 18px",borderWidth:"2.5px",borderRadius:18}}/>
       </div>
-      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>🔥 Trending a {CITIES[city]?.name}</div>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
-        {["mezza maratona","mercatini","concerti","mostre fotografia","laboratori bambini","street food","antiquariato","jazz"].map(t=>(
-          <div key={t} onClick={()=>{const el=document.getElementById('searchInput');if(el){el.value=t;el.dispatchEvent(new Event('input',{bubbles:true}))}}} style={{background:"#fff",borderRadius:20,padding:"8px 16px",fontFamily:"'Comic Neue',cursive",fontSize:13,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>{t}</div>
-        ))}
-      </div>
-      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📍 Filtra per distanza</div>
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {["500m","1 km","5 km","15 km","Provincia"].map((d,i)=>(
-          <div key={d} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:16,fontSize:12,cursor:"pointer",background:i===2?c.color:"#fff",color:i===2?"#fff":"#666",boxShadow:i===2?"0 3px 10px "+c.color+"33":"0 1px 4px rgba(0,0,0,0.05)",fontWeight:i===2?600:400}}>{d}</div>
-        ))}
-      </div>
-      <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📋 Tutti gli eventi a {CITIES[city]?.name}</div>
-      {events.filter(e=>e.cityKey===city).map(e=>(
-        <div key={e.id} data-searchitem={(e.title+' '+e.description+' '+(e.location||'')).toLowerCase()} onClick={()=>setSelected(e)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f0f0f0",cursor:"pointer"}}>
+
+      {searchQ.length<2&&<>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>🔥 Trending a {CITIES[city]?.name}</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+          {["mezza maratona","mercatini","concerti","mostre fotografia","laboratori bambini","street food","antiquariato","jazz"].map(t=>(
+            <div key={t} onClick={()=>setSearchQ(t)} style={{background:"#fff",borderRadius:20,padding:"8px 16px",fontFamily:"'Comic Neue',cursive",fontSize:13,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>{t}</div>
+          ))}
+        </div>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📍 Filtra per distanza</div>
+        <div style={{display:"flex",gap:8,marginBottom:20}}>
+          {["500m","1 km","5 km","15 km","Provincia"].map((d,i)=>(
+            <div key={d} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:16,fontSize:12,cursor:"pointer",background:i===2?c.color:"#fff",color:i===2?"#fff":"#666",boxShadow:i===2?"0 3px 10px "+c.color+"33":"0 1px 4px rgba(0,0,0,0.05)",fontWeight:i===2?600:400}}>{d}</div>
+          ))}
+        </div>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:10}}>📋 Tutti gli eventi a {CITIES[city]?.name}</div>
+      </>}
+
+      {searchQ.length>=2&&<div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#999",marginBottom:12}}>{events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())).length} risultati per "{searchQ}"</div>}
+
+      {(searchQ.length>=2?events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())):events.filter(e=>e.cityKey===city)).map(e=>(
+        <div key={e.id} onClick={()=>setSelected(e)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f0f0f0",cursor:"pointer"}}>
           <div style={{width:44,height:44,borderRadius:14,background:e.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{e.image}</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:14,fontWeight:600,lineHeight:1.2}}>{e.title}</div>
@@ -361,6 +365,8 @@ function App(){
           <div style={{fontSize:12,color:"#ccc"}}>→</div>
         </div>
       ))}
+
+      {searchQ.length>=2&&events.filter(e=>e.cityKey===city&&(e.title+' '+e.description+' '+(e.location||'')).toLowerCase().includes(searchQ.toLowerCase())).length===0&&<div style={{textAlign:"center",padding:"40px 20px"}}><div style={{fontSize:36,color:"#eee",fontWeight:700}}>Nada!</div><div style={{fontFamily:"'Comic Neue',cursive",fontSize:13,color:"#ccc",marginTop:6}}>Nessun risultato</div></div>}
     </div>}
 
     {/* PUBBLICA */}
