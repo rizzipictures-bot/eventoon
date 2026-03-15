@@ -10,11 +10,12 @@
 <title>EVENTOON!</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Passion+One:wght@400;700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#FFFEF8;font-family:'DM Sans',sans-serif;overflow-x:hidden}
 ::-webkit-scrollbar{display:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .leaflet-control-attribution{font-size:8px!important;opacity:.4}
@@ -26,84 +27,80 @@ body{background:#FFFEF8;font-family:'DM Sans',sans-serif;overflow-x:hidden}
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script type="text/babel">
-const {useState, useEffect, useRef} = React;
+const {useState,useEffect,useRef}=React;
 
-
-// ══════════════ DATA ══════════════
-const CC={mercati:{bg:"#F59E0B",label:"MERCATI",icon:"🏺"},sport:{bg:"#059669",label:"SPORT",icon:"⚽"},musica:{bg:"#DC2626",label:"CONCERTI",icon:"🎵"},arte:{bg:"#7C3AED",label:"ARTE",icon:"🎨"},food:{bg:"#EA580C",label:"FOOD",icon:"🍕"},famiglia:{bg:"#2563EB",label:"FAMILY",icon:"👶"}};
+const CC={mercati:{bg:"#F59E0B",label:"MERCATI",icon:"\ud83c\udffa"},sport:{bg:"#059669",label:"SPORT",icon:"\u26bd"},musica:{bg:"#DC2626",label:"CONCERTI",icon:"\ud83c\udfb5"},arte:{bg:"#7C3AED",label:"ARTE",icon:"\ud83c\udfa8"},food:{bg:"#EA580C",label:"FOOD",icon:"\ud83c\udf55"},famiglia:{bg:"#2563EB",label:"FAMILY",icon:"\ud83d\udc76"}};
 const CI={mercati:"linear-gradient(135deg,#F59E0B,#FBBF24 40%,#D97706)",sport:"linear-gradient(135deg,#059669,#34D399 40%,#047857)",musica:"linear-gradient(135deg,#DC2626,#F87171 40%,#991B1B)",arte:"linear-gradient(135deg,#7C3AED,#A78BFA 30%,#DC2626 70%,#F59E0B)",food:"linear-gradient(135deg,#EA580C,#FB923C 40%,#9A3412)",famiglia:"linear-gradient(135deg,#2563EB,#60A5FA 40%,#1D4ED8)"};
 const CITIES={"reggio-emilia":{name:"Reggio Emilia",short:"RE",lat:44.6983,lng:10.6312},"bologna":{name:"Bologna",short:"BO",lat:44.4949,lng:11.3426},"parma":{name:"Parma",short:"PR",lat:44.8015,lng:10.3279},"modena":{name:"Modena",short:"MO",lat:44.6471,lng:10.9252}};
 const COORDS={"re1":[44.6978,10.631],"re2":[44.6975,10.6295],"re3":[44.699,10.632],"re4":[44.696,10.634],"re5":[44.699,10.632],"re6":[44.701,10.628],"re7":[44.772,10.516],"re8":[44.748,10.817],"rem1":[44.6985,10.6295],"rem2":[44.695,10.6355],"rem3":[44.772,10.514],"rem4":[44.926,10.63],"rem5":[44.6988,10.6308],"rem6":[44.6985,10.6315],"bo1":[44.497,11.343],"bo3":[44.494,11.342],"bom1":[44.4935,11.337],"bom2":[44.496,11.345],"bom3":[44.495,11.343],"pr1":[44.786,10.305],"prm1":[44.802,10.329],"mo1":[44.647,10.925],"mom1":[44.646,10.924]};
 
-const EVENTS=[
-  {id:"re1",type:"evento",title:"Viaromantiquaria",category:"mercati",date:"2026-03-14",time:"09–19:30",location:"Via Roma",cityKey:"reggio-emilia",description:"Antiquariato, numismatica, filatelia e quadri antichi.",free:true,source:"Turismo Reggiano"},
-  {id:"re2",type:"evento",title:"Creare con Arte",category:"mercati",date:"2026-03-14",time:"09–19:30",location:"P.zza Martiri",cityKey:"reggio-emilia",description:"Opere dell'ingegno creativo e artigianato artistico.",free:true,source:"Comune di RE"},
-  {id:"re3",type:"evento",title:"Reggio Sport Festival",category:"sport",date:"2026-03-14",time:"14:30–19",location:"P.zza Vittoria",cityKey:"reggio-emilia",description:"Corri con Me, Vaneton Sprint 50m, area bimbi.",free:true,source:"Comune di RE"},
-  {id:"re4",type:"evento",title:"Emanuele Ferrari — Piano",category:"musica",date:"2026-03-14",time:"20:30",location:"Teatro Cavallerizza",cityKey:"reggio-emilia",description:"Recital pianistico. Stagione 2025-2026.",free:false,source:"I Teatri RE"},
+const FALLBACK_EVENTS=[
+  {id:"re1",type:"evento",title:"Viaromantiquaria",category:"mercati",date:"2026-03-14",time:"09\u201319:30",location:"Via Roma",cityKey:"reggio-emilia",description:"Antiquariato, numismatica, filatelia e quadri antichi.",free:true,source:"Turismo Reggiano"},
+  {id:"re2",type:"evento",title:"Creare con Arte",category:"mercati",date:"2026-03-14",time:"09\u201319:30",location:"P.zza Martiri",cityKey:"reggio-emilia",description:"Opere dell'ingegno creativo e artigianato artistico.",free:true,source:"Comune di RE"},
+  {id:"re3",type:"evento",title:"Reggio Sport Festival",category:"sport",date:"2026-03-14",time:"14:30\u201319",location:"P.zza Vittoria",cityKey:"reggio-emilia",description:"Corri con Me, Vaneton Sprint 50m, area bimbi.",free:true,source:"Comune di RE"},
+  {id:"re4",type:"evento",title:"Emanuele Ferrari \u2014 Piano",category:"musica",date:"2026-03-14",time:"20:30",location:"Teatro Cavallerizza",cityKey:"reggio-emilia",description:"Recital pianistico. Stagione 2025-2026.",free:false,source:"I Teatri RE"},
   {id:"re5",type:"evento",title:"La 21 Mezza Maratona",category:"sport",date:"2026-03-15",time:"09:30",location:"P.zza Vittoria",cityKey:"reggio-emilia",description:"21km e 10km FIDAL. 5.500 partecipanti.",free:false,source:"Stampa Reggiana"},
-  {id:"re6",type:"evento",title:"Street is Culture — BMX",category:"sport",date:"2026-03-15",time:"15:00",location:"Skatepark P.le Europa",cityKey:"reggio-emilia",description:"Performance BMX pro e prova aperta.",free:true,source:"Portale Giovani RE"},
+  {id:"re6",type:"evento",title:"Street is Culture \u2014 BMX",category:"sport",date:"2026-03-15",time:"15:00",location:"Skatepark P.le Europa",cityKey:"reggio-emilia",description:"Performance BMX pro e prova aperta.",free:true,source:"Portale Giovani RE"},
   {id:"re7",type:"evento",title:"Correggio in Fiore",category:"mercati",date:"2026-03-15",time:"tutto il giorno",location:"Correggio centro",cityKey:"reggio-emilia",description:"Fiera San Giuseppe: gastronomia, luna park!",free:true,source:"Turismo Reggiano"},
-  {id:"re8",type:"evento",title:"RoccaCiocc Cioccolato",category:"food",date:"2026-03-15",time:"09–20",location:"Reggiolo centro",cityKey:"reggio-emilia",description:"Festival cioccolato: degustazioni e mercato.",free:true,source:"Pro Loco Reggiolo"},
+  {id:"re8",type:"evento",title:"RoccaCiocc Cioccolato",category:"food",date:"2026-03-15",time:"09\u201320",location:"Reggiolo centro",cityKey:"reggio-emilia",description:"Festival cioccolato: degustazioni e mercato.",free:true,source:"Pro Loco Reggiolo"},
   {id:"rem1",type:"mostra",title:"Via Emilia e il West",category:"arte",dateFrom:"2026-02-21",dateTo:"2026-03-22",orari:"Ven-Dom 10-19",location:"Spazio Gerra",cityKey:"reggio-emilia",description:"Simonazzi: fotografia tra Emilia e America.",free:true,source:"TIPO Magazine"},
-  {id:"rem2",type:"mostra",title:"Sheroes Cafe — Borella",category:"arte",dateFrom:"2026-02-01",dateTo:"2026-03-30",orari:"Lun-Ven 9-18",location:"UNIMORE",cityKey:"reggio-emilia",description:"Sopravvissute agli attacchi con acido.",free:true,source:"TIPO Magazine"},
+  {id:"rem2",type:"mostra",title:"Sheroes Cafe \u2014 Borella",category:"arte",dateFrom:"2026-02-01",dateTo:"2026-03-30",orari:"Lun-Ven 9-18",location:"UNIMORE",cityKey:"reggio-emilia",description:"Sopravvissute agli attacchi con acido.",free:true,source:"TIPO Magazine"},
   {id:"rem3",type:"mostra",title:"Contrappunto in nero",category:"arte",dateFrom:"2026-03-14",dateTo:"2026-05-17",orari:"Mar, Dom 10-18:30",location:"Museo Civico Correggio",cityKey:"reggio-emilia",description:"Ascolini e Ghidorsi: dialogo fotografico.",free:false,source:"Turismo Reggiano"},
   {id:"rem4",type:"mostra",title:"Ligabue e Tirelli",category:"arte",dateFrom:"2025-11-15",dateTo:"2026-12-31",orari:"Sab-Dom 10-18",location:"Palazzo Bentivoglio",cityKey:"reggio-emilia",description:"Arte e teatro nella Bassa reggiana.",free:false,source:"Turismo Reggiano"},
   {id:"rem5",type:"mostra",title:"Dance Well",category:"arte",dateFrom:"2025-11-01",dateTo:"2026-05-31",orari:"Date variabili",location:"Palazzo dei Musei",cityKey:"reggio-emilia",description:"Danza inclusiva negli spazi museali.",free:true,source:"Musei Civici RE"},
   {id:"rem6",type:"mostra",title:"Museo Psichiatria",category:"arte",dateFrom:"2026-01-01",dateTo:"2026-12-31",orari:"Sab-Dom 15-18",location:"Campus San Lazzaro",cityKey:"reggio-emilia",description:"Storia dell'internamento psichiatrico.",free:false,source:"Musei Civici RE"},
-  {id:"bo1",type:"evento",title:"Frankenstein — Motus",category:"arte",date:"2026-03-14",time:"20:30",location:"Arena del Sole",cityKey:"bologna",description:"Motus (Ubu 2025) su Frankenstein.",free:false,source:"BolognaToday"},
+  {id:"bo1",type:"evento",title:"Frankenstein \u2014 Motus",category:"arte",date:"2026-03-14",time:"20:30",location:"Arena del Sole",cityKey:"bologna",description:"Motus (Ubu 2025) su Frankenstein.",free:false,source:"BolognaToday"},
   {id:"bo3",type:"evento",title:"Irlanda in Festa",category:"food",date:"2026-03-15",time:"tutto il giorno",location:"Centro Storico BO",cityKey:"bologna",description:"San Patrizio: folk, danza, birre.",free:true,source:"Bologna Weekend"},
   {id:"bom1",type:"mostra",title:"John Giorno",category:"arte",dateFrom:"2026-01-15",dateTo:"2026-05-03",orari:"Mar-Dom 10-18:30",location:"MAMbo",cityKey:"bologna",description:"Retrospettiva del poeta performer.",free:false,source:"Bologna Welcome"},
   {id:"bom2",type:"mostra",title:"Viva Varda!",category:"arte",dateFrom:"2026-03-05",dateTo:"2027-01-10",orari:"Mar-Dom 10-18",location:"Modernissimo",cityKey:"bologna",description:"Varda: cinema, foto, installazioni.",free:false,source:"Bologna Welcome"},
   {id:"bom3",type:"mostra",title:"Ruth Orkin",category:"arte",dateFrom:"2026-03-05",dateTo:"2026-07-19",orari:"10-20",location:"Palazzo Pallavicini",cityKey:"bologna",description:"187 foto della fotografa americana.",free:false,source:"Revenews"},
-  {id:"pr1",type:"evento",title:"Mercanteinfiera",category:"mercati",date:"2026-03-14",time:"09–18",location:"Fiere di Parma",cityKey:"parma",description:"La più grande fiera antiquariato d'Europa.",free:false,source:"ParmaToday"},
+  {id:"pr1",type:"evento",title:"Mercanteinfiera",category:"mercati",date:"2026-03-14",time:"09\u201318",location:"Fiere di Parma",cityKey:"parma",description:"La pi\u00f9 grande fiera antiquariato d'Europa.",free:false,source:"ParmaToday"},
   {id:"prm1",type:"mostra",title:"Bowie Starman!",category:"arte",dateFrom:"2026-01-10",dateTo:"2026-04-06",orari:"Mar-Dom 10-18",location:"Centro Storico PR",cityKey:"parma",description:"Costumi, foto, memorabilia Bowie.",free:false,source:"Parma Welcome"},
-  {id:"mo1",type:"evento",title:"Mercatino Bio",category:"food",date:"2026-03-15",time:"08:30–13",location:"Via Emilia MO",cityKey:"modena",description:"Bio e km zero. Ogni domenica.",free:true,source:"Virgilio"},
-  {id:"mom1",type:"mostra",title:"Jori — Quadri Viventi",category:"arte",dateFrom:"2026-02-15",dateTo:"2026-04-15",orari:"Mar-Sab 10-19:30",location:"Galleria Mazzoli",cityKey:"modena",description:"25 opere pop art emiliana.",free:true,source:"Itinerari nell'Arte"},
+  {id:"mo1",type:"evento",title:"Mercatino Bio",category:"food",date:"2026-03-15",time:"08:30\u201313",location:"Via Emilia MO",cityKey:"modena",description:"Bio e km zero. Ogni domenica.",free:true,source:"Virgilio"},
+  {id:"mom1",type:"mostra",title:"Jori \u2014 Quadri Viventi",category:"arte",dateFrom:"2026-02-15",dateTo:"2026-04-15",orari:"Mar-Sab 10-19:30",location:"Galleria Mazzoli",cityKey:"modena",description:"25 opere pop art emiliana.",free:true,source:"Itinerari nell'Arte"},
 ];
 
-function isOpen(m,d){return new Date(d)>=new Date(m.dateFrom)&&new Date(d)<=new Date(m.dateTo)}
+function isO(m,d){return new Date(d)>=new Date(m.dateFrom)&&new Date(d)<=new Date(m.dateTo)}
 
-// ══════════════ SVG ICONS for bottom bar (ReggioViva style) ══════════════
-function BarIcon({type,active}){
-  const c=active?"#1a1a1a":"#555";const w="2";const s={width:24,height:24,display:"block"};
-  if(type==="home")return<svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V14h6v7"/></svg>;
-  if(type==="map")return<svg style={s} viewBox="0 0 24 24" fill={active?"#1a1a1a":"none"} stroke={c} strokeWidth={w}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill={active?"#FCD34D":"none"} stroke={c}/></svg>;
-  if(type==="fumetto")return<svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="1.2" fill={c}/><path d="M18 8h.01"/></svg>;
-  if(type==="ads")return<svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"><path d="M12 18V6"/><path d="M8 10l-5 2v4l5 2"/><path d="M8 10V18"/><path d="M8 10l8-4v16l-8-4"/><path d="M19 10c1.1.9 2 2.3 2 4s-.9 3.1-2 4"/></svg>;
-  if(type==="profile")return<svg style={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-  return null;
+// Comic SVG scenes per category
+function ComicScene({cat,w,h}){
+  const s={position:"absolute",inset:0,width:"100%",height:"100%"};
+  if(cat==="mercati")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#F59E0B"/><circle cx="80" cy="75" r="45" fill="#fff" opacity=".15"/><rect x="60" y="55" width="40" height="40" rx="4" fill="none" stroke="#1a1a1a" strokeWidth="3" transform="rotate(-8 80 75)"/><rect x="160" y="40" width="30" height="50" rx="3" fill="none" stroke="#1a1a1a" strokeWidth="2.5" transform="rotate(5 175 65)"/><circle cx="175" cy="35" r="12" fill="none" stroke="#1a1a1a" strokeWidth="2"/><rect x="280" y="50" width="60" height="45" rx="5" fill="#fff" opacity=".2" stroke="#1a1a1a" strokeWidth="2"/><path d="M290 60 L330 60 M290 70 L320 70 M290 80 L310 80" stroke="#1a1a1a" strokeWidth="1.5"/><circle cx="350" cy="40" r="8" fill="#fff" opacity=".3"/><circle cx="50" cy="120" r="15" fill="#fff" opacity=".1"/>{Array.from({length:20}).map((_,i)=><circle key={i} cx={Math.random()*400} cy={Math.random()*150} r="1.5" fill="#1a1a1a" opacity=".08"/>)}</svg>;
+  if(cat==="sport")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#059669"/><circle cx="200" cy="75" r="35" fill="none" stroke="#fff" strokeWidth="3" opacity=".3"/><path d="M200 40 Q215 75 200 110" fill="none" stroke="#fff" strokeWidth="2" opacity=".25"/><path d="M165 75 Q200 60 235 75" fill="none" stroke="#fff" strokeWidth="2" opacity=".25"/><path d="M80 30 L120 75 L80 120" fill="none" stroke="#1a1a1a" strokeWidth="3" opacity=".15"/><path d="M320 30 L280 75 L320 120" fill="none" stroke="#1a1a1a" strokeWidth="3" opacity=".15"/><line x1="50" y1="130" x2="350" y2="130" stroke="#fff" strokeWidth="2" opacity=".15" strokeDasharray="10 5"/>{Array.from({length:15}).map((_,i)=><circle key={i} cx={50+i*25} cy={15+Math.random()*10} r="2" fill="#fff" opacity=".12"/>)}</svg>;
+  if(cat==="musica")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#DC2626"/><circle cx="100" cy="100" r="20" fill="#1a1a1a" opacity=".15"/><circle cx="100" cy="100" r="6" fill="#DC2626"/><line x1="120" y1="100" x2="120" y2="30" stroke="#1a1a1a" strokeWidth="3" opacity=".15"/><path d="M120 30 Q140 25 140 40 Q140 50 120 45" fill="#1a1a1a" opacity=".15"/><circle cx="280" cy="80" r="18" fill="#1a1a1a" opacity=".15"/><circle cx="280" cy="80" r="5" fill="#DC2626"/><line x1="298" y1="80" x2="298" y2="20" stroke="#1a1a1a" strokeWidth="3" opacity=".15"/><path d="M250 50 Q260 30 270 50 Q280 70 290 50 Q300 30 310 50" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><path d="M60 40 Q80 20 100 40 Q120 60 140 40" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".15"/></svg>;
+  if(cat==="arte")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7C3AED"/><stop offset="50%" stopColor="#DC2626"/><stop offset="100%" stopColor="#F59E0B"/></linearGradient></defs><rect width="400" height="150" fill="url(#ag)"/><rect x="70" y="25" width="70" height="90" rx="3" fill="none" stroke="#fff" strokeWidth="3" opacity=".25"/><rect x="80" y="35" width="50" height="60" fill="#fff" opacity=".08"/><circle cx="250" cy="75" r="30" fill="none" stroke="#fff" strokeWidth="2.5" opacity=".2"/><path d="M235 90 Q250 50 265 90" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><path d="M310 40 L340 110 M325 40 L295 110" stroke="#fff" strokeWidth="2" opacity=".15"/><circle cx="350" cy="40" r="15" fill="#fff" opacity=".08"/></svg>;
+  if(cat==="food")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#EA580C"/><ellipse cx="200" cy="90" rx="60" ry="35" fill="#fff" opacity=".12" stroke="#1a1a1a" strokeWidth="2" opacity=".1"/><ellipse cx="200" cy="85" rx="55" ry="10" fill="#D97706" opacity=".2"/><circle cx="180" cy="78" r="6" fill="#DC2626" opacity=".25"/><circle cx="210" cy="75" r="5" fill="#059669" opacity=".25"/><circle cx="195" cy="82" r="4" fill="#F59E0B" opacity=".3"/><path d="M80 50 Q90 30 100 50 Q110 70 120 50" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><circle cx="320" cy="60" r="20" fill="#fff" opacity=".08"/><path d="M310 50 L330 70 M330 50 L310 70" stroke="#fff" strokeWidth="1.5" opacity=".15"/></svg>;
+  if(cat==="famiglia")return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#2563EB"/><circle cx="160" cy="55" r="15" fill="none" stroke="#fff" strokeWidth="2.5" opacity=".25"/><rect x="148" y="72" width="24" height="35" rx="8" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><circle cx="220" cy="55" r="15" fill="none" stroke="#fff" strokeWidth="2.5" opacity=".25"/><rect x="208" y="72" width="24" height="35" rx="8" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><circle cx="190" cy="70" r="10" fill="none" stroke="#fff" strokeWidth="2" opacity=".2"/><rect x="182" y="82" width="16" height="25" rx="6" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".15"/><path d="M100 130 Q200 100 300 130" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".1"/></svg>;
+  return<svg style={s} viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice"><rect width="400" height="150" fill="#374151"/><polygon points="200,20 230,80 170,80" fill="none" stroke="#fff" strokeWidth="2" opacity=".15"/></svg>;
 }
 
-function Badge({children,bg,color="#fff",style:s}){
-  return<span style={{background:bg||"#1a1a1a",color,fontFamily:"'Passion One',sans-serif",fontSize:11,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",padding:"4px 12px",borderRadius:20,display:"inline-flex",alignItems:"center",gap:4,...(s||{})}}>{children}</span>;
+function Badge({children,bg,color,style:st}){
+  return<span style={{background:bg||"#1a1a1a",color:color||"#fff",fontFamily:"'Passion One',sans-serif",fontSize:11,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",padding:"4px 12px",borderRadius:20,display:"inline-flex",alignItems:"center",gap:4,...(st||{})}}>{children}</span>;
 }
 
-function EventCard({event,onClick,saved,onSave}){
-  const cc=CC[event.category]||{bg:"#666",label:"EVENTO",icon:"⚡"};
-  const ill=CI[event.category]||CI.arte;
+function EventCard({event,onClick}){
+  const cc=CC[event.category]||{bg:"#666",label:"EVENTO",icon:"\u26a1"};
   const isMostra=event.type==="mostra";
   const perm=isMostra&&event.dateTo&&new Date(event.dateTo).getFullYear()>2026;
   const dateBadge=isMostra&&event.dateTo?(perm?"SEMPRE APERTO":"FINO AL "+new Date(event.dateTo).toLocaleDateString("it",{day:"numeric",month:"2-digit"})):null;
-  const isSaved=saved?.includes(event.id);
-
   return(
-    <div onClick={()=>onClick(event)} style={{borderRadius:20,overflow:"hidden",background:"#fff",border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",cursor:"pointer",marginBottom:16}}>
-      <div style={{height:190,background:ill,position:"relative",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(circle,rgba(0,0,0,.12) 1px,transparent 1px)",backgroundSize:"6px 6px",opacity:.35}}/>
-        <div style={{fontSize:100,opacity:.25,transform:"rotate(-10deg)"}}>{cc.icon}</div>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,height:70,background:"linear-gradient(transparent,rgba(0,0,0,.35))"}}/>
-        <div style={{position:"absolute",top:14,left:14}}><Badge bg={cc.bg}>{cc.icon} {cc.label}</Badge></div>
-        {dateBadge&&<div style={{position:"absolute",top:14,right:14}}><Badge bg={perm?"#059669":"#EA580C"}>{dateBadge}</Badge></div>}
-        {event.free&&<div style={{position:"absolute",bottom:14,left:14,background:"#10B981",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 8px",fontSize:9,fontWeight:900,color:"#fff"}}>GRATIS</div>}
-        {!event.free&&<div style={{position:"absolute",bottom:14,left:14,width:30,height:30,borderRadius:"50%",background:"#FCD34D",border:"2px solid #1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900}}>€</div>}
+    <div onClick={()=>onClick(event)} style={{borderRadius:18,overflow:"hidden",background:"#fff",border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",cursor:"pointer",marginBottom:14}}>
+      <div style={{height:130,position:"relative",overflow:"hidden"}}>
+        <ComicScene cat={event.category} w={400} h={130}/>
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(circle,rgba(0,0,0,.1) 1px,transparent 1px)",backgroundSize:"5px 5px",opacity:.4}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:50,background:"linear-gradient(transparent,rgba(0,0,0,.3))"}}/>
+        <div style={{position:"absolute",top:10,left:10}}><Badge bg={cc.bg}>{cc.icon} {cc.label}</Badge></div>
+        {dateBadge&&<div style={{position:"absolute",top:10,right:10}}><Badge bg={perm?"#059669":"#EA580C"}>{dateBadge}</Badge></div>}
+        {event.free&&<div style={{position:"absolute",bottom:10,left:10,background:"#10B981",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 8px",fontSize:9,fontWeight:900,color:"#fff"}}>GRATIS</div>}
+        {!event.free&&<div style={{position:"absolute",bottom:10,left:10,width:28,height:28,borderRadius:"50%",background:"#FCD34D",border:"2px solid #1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900}}>\u20ac</div>}
       </div>
-      <div style={{padding:"14px 18px 16px"}}>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:21,fontWeight:700,textTransform:"uppercase",lineHeight:1.1,letterSpacing:.5}}>{event.title}</div>
-        <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:13,color:"#777",marginTop:6,lineHeight:1.5}}>{event.description}</div>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:10,fontFamily:"'DM Sans',sans-serif",fontSize:12,color:"#aaa",flexWrap:"wrap"}}>
-          {event.time&&<span>⏰ {event.time}</span>}
-          {event.orari&&<span>🕐 {event.orari}</span>}
-          <span>📍 {event.location}</span>
+      <div style={{padding:"12px 16px 14px"}}>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:20,fontWeight:700,textTransform:"uppercase",lineHeight:1.1,letterSpacing:.5}}>{event.title}</div>
+        <div style={{fontSize:13,color:"#777",marginTop:5,lineHeight:1.5}}>{event.description}</div>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8,fontSize:12,color:"#aaa",flexWrap:"wrap"}}>
+          {event.time&&<span>\u23f0 {event.time}</span>}
+          {event.orari&&<span>\ud83d\udd50 {event.orari}</span>}
+          <span>\ud83d\udccd {event.location}</span>
           <span style={{marginLeft:"auto",fontSize:11}}>{event.source}</span>
         </div>
       </div>
@@ -111,7 +108,17 @@ function EventCard({event,onClick,saved,onSave}){
   );
 }
 
-// ══════════════ MAIN APP ══════════════
+// Bottom bar icons - FILLED, gray
+function BI({type,active}){
+  const c=active?"#1a1a1a":"#888";const s={width:28,height:28,display:"block"};
+  if(type==="home")return<svg style={s} viewBox="0 0 24 24" fill={c} stroke="none"><path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z"/></svg>;
+  if(type==="map")return<svg style={s} viewBox="0 0 24 24" fill={c} stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>;
+  if(type==="fumetto")return<svg style={s} viewBox="0 0 24 24" fill={c} stroke="none"><path d="M12 15.2A3.2 3.2 0 008.8 12 3.2 3.2 0 0012 8.8 3.2 3.2 0 0015.2 12 3.2 3.2 0 0012 15.2zM9 2L7.17 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-3.17L15 2H9z"/></svg>;
+  if(type==="ads")return<svg style={s} viewBox="0 0 24 24" fill={c} stroke="none"><path d="M18 11v2h4v-2h-4zm-2 6.46l2.95 2.19.75-1.3L16 16v1.46zM16 8l3.7-2.35-.75-1.3L16 6.54V8zM3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>;
+  if(type==="profile")return<svg style={s} viewBox="0 0 24 24" fill={c} stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>;
+  return null;
+}
+
 function App(){
   const [city,setCity]=useState("reggio-emilia");
   const [cat,setCat]=useState("tutti");
@@ -120,361 +127,324 @@ function App(){
   const [tab,setTab]=useState("home");
   const [sq,setSq]=useState("");
   const [showMenu,setShowMenu]=useState(false);
+  const [showSearch,setShowSearch]=useState(false);
+  const [showSaved,setShowSaved]=useState(false);
   const [saved,setSaved]=useState([]);
   const [profTab,setProfTab]=useState("preferiti");
   const [settings,setSettings]=useState({notifiche:true,geo:true,raggio:"5km",tema:false});
-  const [leafReady,setLeafReady]=useState(false);
-  const [allEvents,setAllEvents]=useState(EVENTS);
+  const [allEvents,setAllEvents]=useState(FALLBACK_EVENTS);
   const mapRef=useRef(null);
   const mapObj=useRef(null);
 
-  // Load events from JSON (fallback to hardcoded)
-  useEffect(()=>{
-    fetch("events.json").then(r=>r.json()).then(d=>{
-      if(d.events&&d.events.length>0)setAllEvents(d.events);
-    }).catch(()=>{});
-  },[]);
+  useEffect(()=>{try{setSaved(JSON.parse(localStorage.getItem("eventoon_saved")||"[]"))}catch(e){}},[]);
+  useEffect(()=>{fetch("events.json").then(r=>r.json()).then(d=>{if(d.events&&d.events.length>0)setAllEvents(d.events)}).catch(()=>{})},[]);
 
-  // Load saved
-  useEffect(()=>{try{const s=JSON.parse(localStorage.getItem("eventoon_saved")||"[]");setSaved(s)}catch(e){}},[]);
-  const toggleSave=(id)=>{
-    setSaved(prev=>{const n=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];localStorage.setItem("eventoon_saved",JSON.stringify(n));return n;});
-  };
+  const toggleSave=(id)=>{setSaved(p=>{const n=p.includes(id)?p.filter(x=>x!==id):[...p,id];localStorage.setItem("eventoon_saved",JSON.stringify(n));return n})};
 
-  // Load Leaflet
+  // Map
   useEffect(()=>{
-    if(window.L){setLeafReady(true);return}
-    const l=document.createElement("link");l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";document.head.appendChild(l);
-    const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";s.onload=()=>setLeafReady(true);document.head.appendChild(s);
-  },[]);
-
-  // Map render
-  useEffect(()=>{
-    if(tab!=="map"||!leafReady||!mapRef.current)return;
-    const L=window.L;if(!L)return;
-    const ci=CITIES[city];
+    if(tab!=="map"||!mapRef.current||!window.L)return;
     if(!mapObj.current){
-      mapObj.current=L.map(mapRef.current,{zoomControl:false}).setView([ci.lat,ci.lng],13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:'© OSM'}).addTo(mapObj.current);
+      const ci=CITIES[city];
+      mapObj.current=window.L.map(mapRef.current,{zoomControl:false}).setView([ci.lat,ci.lng],13);
+      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"\u00a9 OSM"}).addTo(mapObj.current);
+      setTimeout(()=>mapObj.current.invalidateSize(),200);
     }
+    const L=window.L;const ci=CITIES[city];
     mapObj.current.eachLayer(l=>{if(l instanceof L.Marker)mapObj.current.removeLayer(l)});
-    const filtered=allEvents.filter(e=>e.cityKey===city&&(cat==="tutti"||e.category===cat));
-    filtered.forEach(e=>{
+    allEvents.filter(e=>e.cityKey===city&&(cat==="tutti"||e.category===cat)).forEach(e=>{
       const co=COORDS[e.id];if(!co)return;
-      const cc=CC[e.category]||{bg:"#666",icon:"⚡"};
-      const ic=L.divIcon({className:'',html:'<div style="width:44px;height:44px;border-radius:50%;background:'+cc.bg+';border:3px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.3)">'+cc.icon+'</div>',iconSize:[44,44],iconAnchor:[22,22]});
-      L.marker(co,{icon:ic}).addTo(mapObj.current).on('click',()=>setSel(e));
+      const cc=CC[e.category]||{bg:"#666",icon:"\u26a1"};
+      const ic=L.divIcon({className:"",html:"<div style='width:42px;height:42px;border-radius:50%;background:"+cc.bg+";border:3px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 8px rgba(0,0,0,.3)'>"+cc.icon+"</div>",iconSize:[42,42],iconAnchor:[21,21]});
+      L.marker(co,{icon:ic}).addTo(mapObj.current).on("click",()=>setSel(e));
     });
     mapObj.current.setView([ci.lat,ci.lng],13);
-  },[tab,city,cat,leafReady]);
+    setTimeout(()=>mapObj.current.invalidateSize(),100);
+  },[tab,city,cat,allEvents]);
 
   const c=CITIES[city];
   const allCity=allEvents.filter(e=>e.cityKey===city);
-  const mostre=allCity.filter(e=>e.type==="mostra"&&isOpen(e,day)&&(cat==="tutti"||cat==="arte"||e.category===cat));
+  const mostre=allCity.filter(e=>e.type==="mostra"&&isO(e,day)&&(cat==="tutti"||cat==="arte"||e.category===cat));
   const eventi=allCity.filter(e=>e.type==="evento"&&e.date===day&&(cat==="tutti"||e.category===cat));
   const tot=mostre.length+eventi.length;
-  const sRes=sq.length>=2?allCity.filter(e=>(e.title+" "+e.description+" "+(e.location||"")).toLowerCase().indexOf(sq.toLowerCase())>=0):allCity;
+  const sRes=sq.length>=2?allCity.filter(e=>(e.title+" "+e.description+" "+(e.location||"")).toLowerCase().indexOf(sq.toLowerCase())>=0):[];
   const savedEvents=allEvents.filter(e=>saved.includes(e.id));
-  const mapCount=allEvents.filter(e=>e.cityKey===city&&(cat==="tutti"||e.category===cat)).length;
-
-  const catBtns=[{id:"tutti",label:"Tutti",icon:"🎪"},{id:"musica",label:"Concerti",icon:"🎵"},{id:"sport",label:"Sport",icon:"⚽"},{id:"arte",label:"Arte",icon:"🎨"},{id:"food",label:"Food",icon:"🍕"},{id:"mercati",label:"Mercati",icon:"🏺"}];
+  const d0=new Date().toISOString().slice(0,10);const d1=(()=>{const t=new Date();t.setDate(t.getDate()+1);return t.toISOString().slice(0,10)})();
+  const catBtns=[{id:"tutti",label:"Tutti",icon:"\ud83c\udfaa"},{id:"musica",label:"Concerti",icon:"\ud83c\udfb5"},{id:"sport",label:"Sport",icon:"\u26bd"},{id:"arte",label:"Arte",icon:"\ud83c\udfa8"},{id:"food",label:"Food",icon:"\ud83c\udf55"},{id:"mercati",label:"Mercati",icon:"\ud83c\udffa"}];
 
   return(
 <div style={{minHeight:"100vh",background:"#FFFEF8",display:"flex",flexDirection:"column",fontFamily:"'DM Sans',sans-serif"}}>
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Passion+One:wght@400;700;900&family=DM+Sans:wght@400;500;700&display=swap');
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    body{background:#FFFEF8}
-    ::-webkit-scrollbar{display:none}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .leaflet-control-attribution{font-size:8px!important;opacity:.4}
-  `}</style>
 
-  {/* ══════ HEADER ══════ */}
+  {/* HEADER */}
   <div style={{position:"sticky",top:0,zIndex:50,background:"#FCD34D",borderBottom:"3px solid #1a1a1a",paddingTop:"env(safe-area-inset-top,8px)"}}>
-    <div style={{padding:"8px 18px 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:36,height:36,borderRadius:10,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#FCD34D",fontFamily:"'Passion One',sans-serif",fontWeight:900}}>E!</div>
-        <span style={{fontFamily:"'Passion One',sans-serif",fontSize:26,fontWeight:900}}><span style={{color:"#1a1a1a"}}>EVENTO</span><span style={{color:"#DC2626"}}>ON!</span></span>
+    <div style={{padding:"6px 16px 8px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div onClick={()=>{setTab("home");setSel(null)}} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+        <div style={{width:36,height:36,borderRadius:10,background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+          <span style={{fontSize:9,color:"#FCD34D",fontFamily:"'Passion One',sans-serif",fontWeight:900,letterSpacing:.5}}>E!</span>
+        </div>
+        <span style={{fontFamily:"'Passion One',sans-serif",fontSize:24,fontWeight:900,fontStyle:"italic"}}><span style={{color:"#1a1a1a"}}>EVENT</span><span style={{color:"#DC2626"}}>OON!</span></span>
       </div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div onClick={()=>setShowMenu(!showMenu)} style={{background:"#1a1a1a",color:"#FCD34D",borderRadius:10,padding:"5px 12px",fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:1,cursor:"pointer"}}>{c.short} ▾</div>
-        <div style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><span style={{fontSize:16}}>🔔</span></div>
+      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+        <div onClick={()=>setShowSearch(!showSearch)} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="#FCD34D"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+        <div onClick={()=>setCity(c.short==="RE"?"reggio-emilia":c.short==="BO"?"bologna":c.short==="PR"?"parma":"modena");setShowMenu(!showMenu)} style={{background:"#1a1a1a",color:"#FCD34D",borderRadius:10,padding:"5px 12px",fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:1,cursor:"pointer"}}>{c.short} \u25be</div>
+        <div onClick={()=>setShowSaved(!showSaved)} style={{width:36,height:36,borderRadius:"50%",background:"#1a1a1a",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}>
+          <span style={{fontSize:16}}>\ud83d\udd14</span>
+          {saved.length>0&&<div style={{position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:"#DC2626",border:"2px solid #FCD34D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700}}>{saved.length}</div>}
+        </div>
       </div>
     </div>
   </div>
 
-  {/* City menu */}
+  {/* SEARCH OVERLAY */}
+  {showSearch&&<div style={{position:"fixed",inset:0,zIndex:200,background:"#FFFEF8",animation:"fadeIn .15s"}}>
+    <div style={{background:"#FCD34D",padding:"env(safe-area-inset-top,8px) 16px 12px",borderBottom:"3px solid #1a1a1a",display:"flex",gap:10,alignItems:"center"}}>
+      <input value={sq} onChange={e=>setSq(e.target.value)} placeholder="Cerca eventi, mostre, luoghi..." autoFocus style={{flex:1,fontSize:16,border:"3px solid #1a1a1a",borderRadius:14,padding:"12px 16px",background:"#fff",outline:"none",boxSizing:"border-box",fontFamily:"'DM Sans',sans-serif"}}/>
+      <div onClick={()=>{setShowSearch(false);setSq("")}} style={{fontFamily:"'Passion One',sans-serif",fontSize:15,color:"#1a1a1a",cursor:"pointer",letterSpacing:1}}>CHIUDI</div>
+    </div>
+    <div style={{padding:"16px",overflowY:"auto",maxHeight:"calc(100vh - 80px)"}}>
+      {sq.length<2&&<div>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:2,marginBottom:10}}>\ud83d\udd25 TRENDING</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+          {["maratona","fotografia","mercatini","musica","BMX","danza","cioccolato","Bowie"].map((t,i)=>(
+            <div key={t} onClick={()=>setSq(t)} style={{background:i%3===0?"#FCD34D":"#fff",border:"2.5px solid #1a1a1a",borderRadius:20,padding:"8px 16px",fontSize:13,cursor:"pointer",boxShadow:"2px 2px 0 #1a1a1a"}}>{t}</div>
+          ))}
+        </div>
+      </div>}
+      {sq.length>=2&&<div style={{fontSize:13,color:"#999",marginBottom:12}}>{sRes.length} risultati per "{sq}"</div>}
+      {sq.length>=2&&sRes.map(e=><EventCard key={e.id} event={e} onClick={(ev)=>{setSel(ev);setShowSearch(false)}}/>)}
+      {sq.length>=2&&sRes.length===0&&<div style={{textAlign:"center",padding:"40px"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:36,color:"#eee"}}>NADA!</div></div>}
+    </div>
+  </div>}
+
+  {/* SAVED OVERLAY (bell) */}
+  {showSaved&&<div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setShowSaved(false)}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",animation:"fadeIn .15s"}}/>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:56,right:10,width:300,maxHeight:"70vh",background:"#fff",borderRadius:18,border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",overflow:"hidden"}}>
+      <div style={{padding:"12px 16px",background:"#FCD34D",fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:1,borderBottom:"3px solid #1a1a1a"}}>\ud83d\udd14 EVENTI SALVATI ({saved.length})</div>
+      <div style={{maxHeight:"55vh",overflowY:"auto"}}>
+        {savedEvents.length>0?savedEvents.map(e=>{const cc=CC[e.category]||{bg:"#666",icon:"\u26a1"};return(
+          <div key={e.id} onClick={()=>{setSel(e);setShowSaved(false)}} style={{padding:"12px 16px",borderBottom:"1.5px solid #eee",display:"flex",gap:10,alignItems:"center",cursor:"pointer"}}>
+            <div style={{width:36,height:36,borderRadius:10,background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,border:"2px solid #1a1a1a"}}>{cc.icon}</div>
+            <div style={{flex:1}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:15,lineHeight:1.2}}>{e.title}</div><div style={{fontSize:11,color:"#999",marginTop:2}}>{e.location}</div></div>
+          </div>
+        )}):<div style={{padding:"30px 20px",textAlign:"center",color:"#ccc"}}><div style={{fontSize:36,marginBottom:6}}>\u2b50</div>Nessun evento salvato</div>}
+      </div>
+    </div>
+  </div>}
+
+  {/* CITY MENU */}
   {showMenu&&<div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setShowMenu(false)}>
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",animation:"fadeIn .15s"}}/>
-    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:60,right:16,background:"#fff",borderRadius:16,border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",width:220,overflow:"hidden"}}>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:56,right:54,background:"#fff",borderRadius:16,border:"3px solid #1a1a1a",boxShadow:"4px 4px 0 #1a1a1a",width:220,overflow:"hidden"}}>
       {Object.entries(CITIES).map(([k,ci])=>(
-        <div key={k} onClick={()=>{setCity(k);setShowMenu(false);setCat("tutti")}} style={{padding:"13px 18px",background:city===k?"#1a1a1a":"#fff",color:city===k?"#FCD34D":"#1a1a1a",fontFamily:"'Passion One',sans-serif",fontSize:17,letterSpacing:1,cursor:"pointer",borderBottom:"1.5px solid #eee"}}>{ci.name}{city===k&&" ✓"}</div>
+        <div key={k} onClick={()=>{setCity(k);setShowMenu(false);setCat("tutti")}} style={{padding:"13px 18px",background:city===k?"#1a1a1a":"#fff",color:city===k?"#FCD34D":"#1a1a1a",fontFamily:"'Passion One',sans-serif",fontSize:17,letterSpacing:1,cursor:"pointer",borderBottom:"1.5px solid #eee"}}>{ci.name}{city===k&&" \u2713"}</div>
       ))}
     </div>
   </div>}
 
-  {/* ══════ CONTENT ══════ */}
-  <div style={{flex:1,overflowY:tab==="map"?"hidden":"auto",padding:tab==="map"?"0":"0 0 100px",WebkitOverflowScrolling:"touch",position:"relative",zIndex:1,display:"flex",flexDirection:"column"}}>
+  {/* CONTENT */}
+  <div style={{flex:1,overflowY:tab==="map"?"hidden":"auto",padding:tab==="map"?"0":"0 0 96px",WebkitOverflowScrolling:"touch",position:"relative",zIndex:1,display:"flex",flexDirection:"column"}}>
 
-    {/* ══════ HOME ══════ */}
-    {tab==="home"&&<div style={{padding:"14px 16px 0"}}>
+    {/* HOME */}
+    {tab==="home"&&<div style={{padding:"12px 16px 0"}}>
       <div style={{display:"flex",gap:8,marginBottom:10,overflowX:"auto",scrollbarWidth:"none"}}>
-        {(()=>{const t=new Date();const d0=t.toISOString().slice(0,10);const d1=new Date(t);d1.setDate(d1.getDate()+1);const d1s=d1.toISOString().slice(0,10);return[[d0,"OGGI","#FCD34D"],[d1s,"DOMANI","#fff"],["weekend","WEEKEND","#fff"]]})().map(([id,lb,bg])=>(
-          <div key={id} onClick={()=>setDay(id==="weekend"?"2026-03-15":id)} style={{background:bg,border:"2.5px solid #1a1a1a",borderRadius:20,padding:"8px 22px",fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1.5,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{lb}</div>
+        {[[d0,"OGGI","#FCD34D"],[d1,"DOMANI","#fff"],["weekend","WEEKEND","#fff"]].map(([id,lb,bg])=>(
+          <div key={id} onClick={()=>setDay(id==="weekend"?d1:id)} style={{background:bg,border:"2.5px solid #1a1a1a",borderRadius:20,padding:"8px 22px",fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1.5,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{lb}</div>
         ))}
       </div>
-      <div style={{display:"flex",gap:8,marginBottom:14,overflowX:"auto",scrollbarWidth:"none"}}>
+      <div style={{display:"flex",gap:8,marginBottom:12,overflowX:"auto",scrollbarWidth:"none"}}>
         {catBtns.map(ct=>(
           <div key={ct.id} onClick={()=>setCat(ct.id)} style={{background:cat===ct.id?"#1a1a1a":ct.id==="tutti"?"#FCD34D":"#fff",color:cat===ct.id?"#FCD34D":"#1a1a1a",border:"2.5px solid #1a1a1a",borderRadius:20,padding:"8px 16px",fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:1,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>{ct.icon} {ct.label}</div>
         ))}
       </div>
-      <div style={{fontSize:13,color:"#999",marginBottom:12}}>{tot} eventi trovati</div>
-      {mostre.map(m=><EventCard key={m.id} event={m} onClick={setSel} saved={saved}/>)}
-      {eventi.map(e=><EventCard key={e.id} event={e} onClick={setSel} saved={saved}/>)}
-      {tot===0&&<div style={{textAlign:"center",padding:"60px"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:48,color:"#eee"}}>NADA!</div></div>}
+      <div style={{fontSize:13,color:"#999",marginBottom:10}}>{tot} eventi trovati</div>
+      {mostre.map(m=><EventCard key={m.id} event={m} onClick={setSel}/>)}
+      {eventi.map(e=><EventCard key={e.id} event={e} onClick={setSel}/>)}
+      {tot===0&&<div style={{textAlign:"center",padding:"50px"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:42,color:"#eee"}}>NADA!</div></div>}
     </div>}
 
-    {/* ══════ MAP ══════ */}
+    {/* MAP */}
     {tab==="map"&&<div style={{flex:1,display:"flex",flexDirection:"column"}}>
       <div style={{padding:"10px 16px",background:"#FCD34D",borderBottom:"2px solid #1a1a1a"}}>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:22,letterSpacing:2,marginBottom:8}}>🗺️ MAPPA EVENTI</div>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:20,letterSpacing:2,marginBottom:8}}>\ud83d\uddfa\ufe0f MAPPA EVENTI</div>
         <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none"}}>
           {catBtns.map(ct=>(
             <div key={ct.id} onClick={()=>setCat(ct.id)} style={{background:cat===ct.id?"#1a1a1a":ct.id==="tutti"?"#FCD34D":"#fff",color:cat===ct.id?"#FCD34D":"#1a1a1a",border:"2.5px solid #1a1a1a",borderRadius:20,padding:"6px 14px",fontFamily:"'Passion One',sans-serif",fontSize:12,letterSpacing:1,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{ct.icon} {ct.label}</div>
           ))}
         </div>
       </div>
-      <div style={{flex:1,position:"relative"}}>
-        <div ref={mapRef} style={{width:"100%",height:"100%"}}/>
-        <div style={{position:"absolute",top:12,right:12,background:"#1a1a1a",color:"#FCD34D",borderRadius:14,padding:"6px 14px",fontFamily:"'Passion One',sans-serif",fontSize:13,border:"2px solid #FCD34D"}}>{mapCount} eventi</div>
+      <div style={{flex:1,position:"relative",minHeight:400}}>
+        <div ref={mapRef} style={{position:"absolute",inset:0}}/>
+        <div style={{position:"absolute",top:12,right:12,background:"#1a1a1a",color:"#FCD34D",borderRadius:14,padding:"6px 14px",fontFamily:"'Passion One',sans-serif",fontSize:13,border:"2px solid #FCD34D",zIndex:500}}>{allEvents.filter(e=>e.cityKey===city&&(cat==="tutti"||e.category===cat)).length} eventi</div>
       </div>
     </div>}
 
-    {/* ══════ FUMETTO ══════ */}
+    {/* FUMETTO */}
     {tab==="fumetto"&&<div>
-      <div style={{background:"#FCD34D",padding:"14px 18px",borderBottom:"3px solid #1a1a1a"}}>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:26,letterSpacing:2}}>📸 CREA FUMETTO</div>
-        <div style={{fontSize:14,color:"#333",marginTop:2}}>Trasforma la tua foto con l'AI!</div>
+      <div style={{background:"#FCD34D",padding:"12px 18px",borderBottom:"3px solid #1a1a1a"}}>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:24,letterSpacing:2}}>\ud83d\udcf8 CREA FUMETTO</div>
+        <div style={{fontSize:13,color:"#333",marginTop:2}}>Trasforma la tua foto con l'AI!</div>
       </div>
-      <div style={{padding:"20px 16px 0"}}>
-        {/* Foto → Fumetto box */}
-        <div style={{background:"#1a1a1a",borderRadius:20,padding:"30px 20px",textAlign:"center",marginBottom:24,border:"3px solid #1a1a1a"}}>
-          <div style={{fontSize:50,marginBottom:6}}>📸 → 🎨</div>
-          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:22,color:"#FCD34D",letterSpacing:2}}>FOTO → FUMETTO</div>
+      <div style={{padding:"18px 16px 0"}}>
+        <div style={{background:"#1a1a1a",borderRadius:18,padding:"26px 20px",textAlign:"center",marginBottom:20,border:"3px solid #1a1a1a"}}>
+          <div style={{fontSize:44,marginBottom:6}}>\ud83d\udcf8 \u2192 \ud83c\udfa8</div>
+          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:20,color:"#FCD34D",letterSpacing:2}}>FOTO \u2192 FUMETTO</div>
         </div>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:28,textAlign:"center",letterSpacing:1,marginBottom:8}}>SCEGLI UNA FOTO</div>
-        <div style={{textAlign:"center",fontSize:14,color:"#777",marginBottom:20,lineHeight:1.6}}>Scatta una foto all'evento o scegli dalla galleria.<br/>La nostra AI la trasformerà in un fumetto pop-art!</div>
-        {/* Two buttons */}
-        <div style={{display:"flex",gap:12,marginBottom:20}}>
-          <div style={{flex:1,background:"#DC2626",border:"3px solid #1a1a1a",borderRadius:18,padding:"24px 16px",textAlign:"center",cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a"}}>
-            <div style={{fontSize:36,marginBottom:6}}>📸</div>
-            <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,color:"#fff",letterSpacing:1}}>Scatta Foto</div>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:26,textAlign:"center",letterSpacing:1,marginBottom:6}}>SCEGLI UNA FOTO</div>
+        <div style={{textAlign:"center",fontSize:14,color:"#777",marginBottom:18,lineHeight:1.6}}>Scatta una foto all'evento o scegli dalla galleria.<br/>La nostra AI la trasforma in fumetto pop-art!</div>
+        <div style={{display:"flex",gap:12,marginBottom:18}}>
+          <div style={{flex:1,background:"#DC2626",border:"3px solid #1a1a1a",borderRadius:18,padding:"22px 16px",textAlign:"center",cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a"}}>
+            <div style={{fontSize:32,marginBottom:4}}>\ud83d\udcf8</div>
+            <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,color:"#fff",letterSpacing:1}}>Scatta Foto</div>
           </div>
-          <div style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,padding:"24px 16px",textAlign:"center",cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a"}}>
-            <div style={{fontSize:36,marginBottom:6}}>🖼️</div>
-            <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:1}}>Galleria</div>
+          <div style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,padding:"22px 16px",textAlign:"center",cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a"}}>
+            <div style={{fontSize:32,marginBottom:4}}>\ud83d\uddbc\ufe0f</div>
+            <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:1}}>Galleria</div>
           </div>
         </div>
-        {/* Come funziona */}
-        <div style={{background:"#FFFDE7",border:"3px solid #1a1a1a",borderRadius:18,padding:"16px 20px",boxShadow:"3px 3px 0 #1a1a1a"}}>
-          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:1,marginBottom:8}}>Come funziona</div>
+        <div style={{background:"#FFFDE7",border:"3px solid #1a1a1a",borderRadius:18,padding:"14px 18px",boxShadow:"3px 3px 0 #1a1a1a"}}>
+          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,marginBottom:6}}>Come funziona</div>
           <div style={{fontSize:14,color:"#555",lineHeight:1.8}}>1. Scegli o scatta una foto<br/>2. L'AI applica stile fumetto pop-art<br/>3. Pubblica sulla mappa di {c.name}</div>
         </div>
       </div>
     </div>}
 
-    {/* ══════ ADS ══════ */}
+    {/* ADS */}
     {tab==="ads"&&<div>
-      <div style={{background:"#FCD34D",padding:"18px 18px",borderBottom:"3px solid #1a1a1a",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:4}}>📢</div>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:30,letterSpacing:2}}>PROMUOVI</div>
-        <div style={{fontSize:14,color:"#333",marginTop:4}}>Raggiungi migliaia di persone con la tua inserzione</div>
+      <div style={{background:"#FCD34D",padding:"16px 18px",borderBottom:"3px solid #1a1a1a",textAlign:"center"}}>
+        <div style={{fontSize:36,marginBottom:2}}>\ud83d\udce2</div>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:28,letterSpacing:2}}>PROMUOVI</div>
+        <div style={{fontSize:13,color:"#333",marginTop:4}}>Raggiungi migliaia di persone con la tua inserzione</div>
       </div>
-      <div style={{padding:"20px 16px 0"}}>
-        <button style={{width:"100%",background:"#DC2626",color:"#fff",border:"3px solid #1a1a1a",borderRadius:16,padding:18,fontFamily:"'Passion One',sans-serif",fontSize:24,letterSpacing:2,cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a",marginBottom:16}}>+ CREA INSERZIONE</button>
-        {/* Pricing */}
-        <div style={{display:"flex",gap:10,marginBottom:16}}>
-          {[["3 giorni","€9,90",false],["7 giorni","€19,90",true],["30 giorni","€49,90",false]].map(([l,p,pop],i)=>(
-            <div key={i} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:16,padding:"16px 8px",textAlign:"center",position:"relative",boxShadow:"3px 3px 0 #1a1a1a"}}>
-              {pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 10px",fontFamily:"'Passion One',sans-serif",fontSize:10,letterSpacing:1,whiteSpace:"nowrap"}}>PIÙ SCELTO</div>}
-              <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:600}}>{l}</div>
-              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:pop?28:24,color:"#DC2626",marginTop:4}}>{p}</div>
+      <div style={{padding:"18px 16px 0"}}>
+        <button style={{width:"100%",background:"#DC2626",color:"#fff",border:"3px solid #1a1a1a",borderRadius:16,padding:16,fontFamily:"'Passion One',sans-serif",fontSize:22,letterSpacing:2,cursor:"pointer",boxShadow:"4px 4px 0 #1a1a1a",marginBottom:14}}>+ CREA INSERZIONE</button>
+        <div style={{display:"flex",gap:10,marginBottom:14}}>
+          {[["3 giorni","\u20ac9,90",false],["7 giorni","\u20ac19,90",true],["30 giorni","\u20ac49,90",false]].map(([l,p,pop],i)=>(
+            <div key={i} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:16,padding:"14px 6px",textAlign:"center",position:"relative",boxShadow:"3px 3px 0 #1a1a1a"}}>
+              {pop&&<div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:10,padding:"2px 10px",fontFamily:"'Passion One',sans-serif",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>PI\u00d9 SCELTO</div>}
+              <div style={{fontSize:13,fontWeight:600}}>{l}</div>
+              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:pop?26:22,color:"#DC2626",marginTop:4}}>{p}</div>
             </div>
           ))}
         </div>
-        {/* Categorie */}
-        <div style={{background:"#E0F2FE",border:"3px solid #1a1a1a",borderRadius:18,padding:"16px 20px",marginBottom:24,boxShadow:"3px 3px 0 #1a1a1a"}}>
-          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:1,marginBottom:8}}>Categorie ammesse</div>
-          <div style={{fontSize:14,color:"#555",lineHeight:1.8}}>🎵 Concerti · 📚 Corsi & Workshop · 🍕 Ristoranti & Locali · 🌙 Vita Notturna · 👶 Bambini</div>
+        <div style={{background:"#E0F2FE",border:"3px solid #1a1a1a",borderRadius:18,padding:"14px 18px",marginBottom:20,boxShadow:"3px 3px 0 #1a1a1a"}}>
+          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,marginBottom:6}}>Categorie ammesse</div>
+          <div style={{fontSize:14,color:"#555",lineHeight:1.8}}>\ud83c\udfb5 Concerti \u00b7 \ud83d\udcda Corsi & Workshop \u00b7 \ud83c\udf55 Ristoranti & Locali \u00b7 \ud83c\udf19 Vita Notturna \u00b7 \ud83d\udc76 Bambini</div>
         </div>
-        {/* Inserzioni attive */}
         <div style={{fontFamily:"'Passion One',sans-serif",fontSize:20,letterSpacing:2,marginBottom:6,borderBottom:"3px solid #FCD34D",paddingBottom:6}}>INSERZIONI ATTIVE</div>
-        <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:60,marginBottom:10}}>📭</div>
-          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:.5}}>Nessuna inserzione attiva al momento.</div>
-          <div style={{fontSize:14,color:"#999",marginTop:4}}>Sii il primo a promuoverti!</div>
-        </div>
+        <div style={{textAlign:"center",padding:"36px 20px"}}><div style={{fontSize:56,marginBottom:8}}>\ud83d\udced</div><div style={{fontFamily:"'Passion One',sans-serif",fontSize:17}}>Nessuna inserzione attiva.</div><div style={{fontSize:14,color:"#999",marginTop:4}}>Sii il primo a promuoverti!</div></div>
       </div>
     </div>}
 
-    {/* ══════ PROFILE ══════ */}
+    {/* PROFILE */}
     {tab==="profile"&&<div>
-      <div style={{background:"#FCD34D",padding:"14px 18px",borderBottom:"3px solid #1a1a1a"}}>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:26,letterSpacing:2}}>👤 PROFILO</div>
+      <div style={{background:"#FCD34D",padding:"12px 18px",borderBottom:"3px solid #1a1a1a"}}>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:24,letterSpacing:2}}>\ud83d\udc64 PROFILO</div>
       </div>
-      <div style={{padding:"16px 16px 0"}}>
-        {/* Profile card */}
-        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:20,padding:"24px 20px",textAlign:"center",marginBottom:16,boxShadow:"4px 4px 0 #1a1a1a"}}>
-          <div style={{width:80,height:80,borderRadius:"50%",background:"#FCD34D",border:"4px solid #1a1a1a",margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{fontFamily:"'Passion One',sans-serif",fontSize:28,color:"#1a1a1a"}}>E!</span>
-          </div>
-          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:24,letterSpacing:.5}}>Utente EVENTOON!</div>
-          <div style={{fontSize:14,color:"#999",marginTop:4}}>📍 {c.name}</div>
-          <div style={{borderTop:"1.5px solid #eee",marginTop:16,paddingTop:16,display:"flex",justifyContent:"space-around"}}>
-            {[[savedEvents.length,"Preferiti"],["0","Fumetti"],["1","Città"]].map(([n,l],i)=>(
-              <div key={i} style={{textAlign:"center",flex:1,borderRight:i<2?"1.5px solid #eee":"none"}}>
-                <div style={{fontFamily:"'Passion One',sans-serif",fontSize:28}}>{n}</div>
-                <div style={{fontSize:12,color:"#999"}}>{l}</div>
-              </div>
+      <div style={{padding:"14px 16px 0"}}>
+        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:20,padding:"22px 18px",textAlign:"center",marginBottom:14,boxShadow:"4px 4px 0 #1a1a1a"}}>
+          <div style={{width:70,height:70,borderRadius:"50%",background:"#FCD34D",border:"4px solid #1a1a1a",margin:"0 auto 10px",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontFamily:"'Passion One',sans-serif",fontSize:24,fontStyle:"italic",color:"#1a1a1a"}}>E!</span></div>
+          <div style={{fontFamily:"'Passion One',sans-serif",fontSize:22}}>Utente EVENTOON!</div>
+          <div style={{fontSize:14,color:"#999",marginTop:4}}>\ud83d\udccd {c.name}</div>
+          <div style={{borderTop:"1.5px solid #eee",marginTop:14,paddingTop:14,display:"flex",justifyContent:"space-around"}}>
+            {[[savedEvents.length,"Preferiti"],["0","Fumetti"],["1","Citt\u00e0"]].map(([n,l],i)=>(
+              <div key={i} style={{textAlign:"center",flex:1,borderRight:i<2?"1.5px solid #eee":"none"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:26}}>{n}</div><div style={{fontSize:12,color:"#999"}}>{l}</div></div>
             ))}
           </div>
         </div>
-
-        {/* Tab bar Preferiti / I miei fumetti */}
-        <div style={{display:"flex",marginBottom:16,border:"3px solid #1a1a1a",borderRadius:14,overflow:"hidden"}}>
-          <div onClick={()=>setProfTab("preferiti")} style={{flex:1,padding:"12px",textAlign:"center",background:profTab==="preferiti"?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,cursor:"pointer"}}>★ Preferiti</div>
-          <div onClick={()=>setProfTab("fumetti")} style={{flex:1,padding:"12px",textAlign:"center",background:profTab==="fumetti"?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,cursor:"pointer",borderLeft:"3px solid #1a1a1a"}}>🎨 I miei fumetti</div>
+        <div style={{display:"flex",marginBottom:14,border:"3px solid #1a1a1a",borderRadius:14,overflow:"hidden"}}>
+          <div onClick={()=>setProfTab("preferiti")} style={{flex:1,padding:"11px",textAlign:"center",background:profTab==="preferiti"?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>\u2605 Preferiti</div>
+          <div onClick={()=>setProfTab("fumetti")} style={{flex:1,padding:"11px",textAlign:"center",background:profTab==="fumetti"?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer",borderLeft:"3px solid #1a1a1a"}}>\ud83c\udfa8 I miei fumetti</div>
         </div>
+        {profTab==="preferiti"&&(savedEvents.length>0?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {savedEvents.map(e=>{const cc=CC[e.category]||{bg:"#666",icon:"\u26a1"};return(
+            <div key={e.id} onClick={()=>setSel(e)} style={{background:"#fff",border:"2.5px solid #1a1a1a",borderRadius:14,overflow:"hidden",cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>
+              <div style={{height:70,position:"relative"}}><ComicScene cat={e.category}/><div style={{position:"absolute",top:6,left:6,width:26,height:26,borderRadius:8,background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,border:"2px solid #1a1a1a"}}>{cc.icon}</div></div>
+              <div style={{padding:"8px 10px"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:13,lineHeight:1.2}}>{e.title}</div><div style={{fontSize:11,color:"#999",marginTop:3}}>{e.date||""}</div></div>
+            </div>
+          )})}
+        </div>:<div style={{textAlign:"center",padding:"30px",color:"#ccc"}}><div style={{fontSize:36,marginBottom:6}}>\u2b50</div>Nessun evento salvato</div>)}
+        {profTab==="fumetti"&&<div style={{textAlign:"center",padding:"30px",color:"#ccc"}}><div style={{fontSize:36,marginBottom:6}}>\ud83c\udfa8</div>Nessun fumetto creato</div>}
 
-        {/* Saved grid */}
-        {profTab==="preferiti"&&<div>
-          {savedEvents.length>0?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            {savedEvents.map(e=>{const cc=CC[e.category]||{bg:"#666",icon:"⚡"};return(
-              <div key={e.id} onClick={()=>setSel(e)} style={{background:"#fff",border:"2.5px solid #1a1a1a",borderRadius:16,overflow:"hidden",cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>
-                <div style={{height:80,background:CI[e.category]||CI.arte,position:"relative"}}>
-                  <div style={{position:"absolute",top:8,left:8,width:28,height:28,borderRadius:"50%",background:cc.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,border:"2px solid #1a1a1a"}}>{cc.icon}</div>
-                </div>
-                <div style={{padding:"10px 12px"}}><div style={{fontFamily:"'Passion One',sans-serif",fontSize:14,lineHeight:1.2}}>{e.title}</div><div style={{fontSize:11,color:"#999",marginTop:4}}>{e.date||e.orari}</div></div>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:2,color:"#999",marginTop:20,marginBottom:8}}>\u2699\ufe0f IMPOSTAZIONI</div>
+        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,overflow:"hidden",marginBottom:14,boxShadow:"3px 3px 0 #1a1a1a"}}>
+          {[{k:"notifiche",l:"\ud83d\udd14 Notifiche eventi",d:"Avvisi per eventi nelle vicinanze"},{k:"geo",l:"\ud83d\udccd Geolocalizzazione",d:"Mostra eventi vicino a te"}].map((item,i)=>(
+            <div key={i} style={{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1.5px solid #eee"}}>
+              <div><div style={{fontWeight:600,fontSize:14}}>{item.l}</div><div style={{fontSize:12,color:"#999",marginTop:1}}>{item.d}</div></div>
+              <div onClick={()=>setSettings(p=>({...p,[item.k]:!p[item.k]}))} style={{width:50,height:26,borderRadius:13,background:settings[item.k]?"#FCD34D":"#ddd",border:"2px solid #1a1a1a",position:"relative",cursor:"pointer"}}>
+                <div style={{width:20,height:20,borderRadius:10,background:"#1a1a1a",position:"absolute",top:1,left:settings[item.k]?26:2,transition:"left .2s"}}/>
               </div>
-            )})}
-          </div>:<div style={{textAlign:"center",padding:"30px",color:"#ccc"}}><div style={{fontSize:40,marginBottom:8}}>⭐</div>Nessun evento salvato.<br/>Tocca il cuore su un evento!</div>}
-        </div>}
-        {profTab==="fumetti"&&<div style={{textAlign:"center",padding:"30px",color:"#ccc"}}><div style={{fontSize:40,marginBottom:8}}>🎨</div>Nessun fumetto creato.<br/>Usa la funzione Fumetto!</div>}
-
-        {/* IMPOSTAZIONI */}
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:2,color:"#999",marginTop:24,marginBottom:10}}>⚙️ IMPOSTAZIONI</div>
-        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,overflow:"hidden",marginBottom:16,boxShadow:"3px 3px 0 #1a1a1a"}}>
-          {/* Notifiche */}
-          <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1.5px solid #eee"}}>
-            <div><div style={{fontWeight:600,fontSize:15}}>🔔 Notifiche eventi</div><div style={{fontSize:12,color:"#999",marginTop:2}}>Avvisi per eventi nelle vicinanze</div></div>
-            <div onClick={()=>setSettings(p=>({...p,notifiche:!p.notifiche}))} style={{width:52,height:28,borderRadius:14,background:settings.notifiche?"#FCD34D":"#ddd",border:"2px solid #1a1a1a",position:"relative",cursor:"pointer"}}>
-              <div style={{width:22,height:22,borderRadius:11,background:"#1a1a1a",position:"absolute",top:1,left:settings.notifiche?26:2,transition:"left .2s"}}/>
             </div>
-          </div>
-          {/* Geo */}
-          <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1.5px solid #eee"}}>
-            <div><div style={{fontWeight:600,fontSize:15}}>📍 Geolocalizzazione</div><div style={{fontSize:12,color:"#999",marginTop:2}}>Mostra eventi vicino a te</div></div>
-            <div onClick={()=>setSettings(p=>({...p,geo:!p.geo}))} style={{width:52,height:28,borderRadius:14,background:settings.geo?"#FCD34D":"#ddd",border:"2px solid #1a1a1a",position:"relative",cursor:"pointer"}}>
-              <div style={{width:22,height:22,borderRadius:11,background:"#1a1a1a",position:"absolute",top:1,left:settings.geo?26:2,transition:"left .2s"}}/>
-            </div>
-          </div>
-          {/* Raggio */}
-          <div style={{padding:"16px 18px",borderBottom:"1.5px solid #eee"}}>
-            <div style={{fontWeight:600,fontSize:15,marginBottom:10}}>📏 Raggio di ricerca</div>
+          ))}
+          <div style={{padding:"14px 16px",borderBottom:"1.5px solid #eee"}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:8}}>\ud83d\udccf Raggio di ricerca</div>
             <div style={{display:"flex",gap:8}}>
               {["500m","1km","5km","10km"].map(r=>(
-                <div key={r} onClick={()=>setSettings(p=>({...p,raggio:r}))} style={{flex:1,textAlign:"center",padding:"8px",borderRadius:20,border:"2px solid #1a1a1a",background:settings.raggio===r?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:.5,cursor:"pointer"}}>{r}</div>
+                <div key={r} onClick={()=>setSettings(p=>({...p,raggio:r}))} style={{flex:1,textAlign:"center",padding:"7px",borderRadius:20,border:"2px solid #1a1a1a",background:settings.raggio===r?"#FCD34D":"#fff",fontFamily:"'Passion One',sans-serif",fontSize:13,cursor:"pointer"}}>{r}</div>
               ))}
             </div>
           </div>
-          {/* Tema */}
-          <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><div style={{fontWeight:600,fontSize:15}}>🌙 Tema scuro</div><div style={{fontSize:12,color:"#999",marginTop:2}}>Modalità notte</div></div>
-            <div onClick={()=>setSettings(p=>({...p,tema:!p.tema}))} style={{width:52,height:28,borderRadius:14,background:settings.tema?"#FCD34D":"#ddd",border:"2px solid #1a1a1a",position:"relative",cursor:"pointer"}}>
-              <div style={{width:22,height:22,borderRadius:11,background:settings.tema?"#1a1a1a":"#aaa",position:"absolute",top:1,left:settings.tema?26:2,transition:"left .2s"}}/>
+          <div style={{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{fontWeight:600,fontSize:14}}>\ud83c\udf19 Tema scuro</div><div style={{fontSize:12,color:"#999",marginTop:1}}>Modalit\u00e0 notte</div></div>
+            <div onClick={()=>setSettings(p=>({...p,tema:!p.tema}))} style={{width:50,height:26,borderRadius:13,background:settings.tema?"#FCD34D":"#ddd",border:"2px solid #1a1a1a",position:"relative",cursor:"pointer"}}>
+              <div style={{width:20,height:20,borderRadius:10,background:settings.tema?"#1a1a1a":"#aaa",position:"absolute",top:1,left:settings.tema?26:2,transition:"left .2s"}}/>
             </div>
           </div>
         </div>
 
-        {/* Admin */}
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:18,letterSpacing:2,color:"#999",marginBottom:10}}>🛠️ STRUMENTI ADMIN</div>
-        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>
-          <div><div style={{fontWeight:600,fontSize:15}}>📡 RSS Aggregator</div><div style={{fontSize:12,color:"#999",marginTop:2}}>Aggiorna eventi dai giornali locali</div></div>
-          <span style={{fontSize:18}}>→</span>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:2,color:"#999",marginBottom:8}}>\ud83d\udee0\ufe0f STRUMENTI ADMIN</div>
+        <div style={{background:"#fff",border:"3px solid #1a1a1a",borderRadius:18,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>
+          <div><div style={{fontWeight:600,fontSize:14}}>\ud83d\udce1 RSS Aggregator</div><div style={{fontSize:12,color:"#999",marginTop:1}}>Aggiorna eventi dai giornali locali</div></div>
+          <span style={{fontSize:18}}>\u2192</span>
         </div>
-
-        {/* Footer */}
-        <div style={{textAlign:"center",padding:"20px 0 10px",color:"#ccc"}}>
-          <div style={{fontSize:13}}>EVENTOON! v1.0</div>
-          <div style={{fontSize:12,marginTop:2}}>La tua città, a fumetti</div>
-          <div style={{fontSize:12,color:"#aaa",marginTop:8,textDecoration:"underline",cursor:"pointer"}}>Privacy Policy</div>
-        </div>
+        <div style={{textAlign:"center",padding:"16px 0 8px",color:"#ccc"}}><div style={{fontSize:12}}>EVENTOON! v1.0 \u2014 La tua citt\u00e0, a fumetti</div></div>
       </div>
     </div>}
 
   </div>
 
-  {/* ══════ DETAIL SHEET ══════ */}
+  {/* DETAIL */}
   {sel&&<div style={{position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"flex-end"}}>
     <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.5)",animation:"fadeIn .15s"}} onClick={()=>setSel(null)}/>
-    <div style={{position:"relative",zIndex:1,width:"100%",background:"#fff",borderRadius:"24px 24px 0 0",maxHeight:"85vh",overflowY:"auto",animation:"slideUp .3s cubic-bezier(.32,.72,.37,1.05)",paddingBottom:24,border:"3px solid #1a1a1a",borderBottom:"none"}}>
-      <div style={{padding:"12px 0 6px",textAlign:"center"}}><div style={{width:40,height:5,background:"#ddd",borderRadius:3,margin:"0 auto"}}/></div>
+    <div style={{position:"relative",zIndex:1,width:"100%",background:"#fff",borderRadius:"22px 22px 0 0",maxHeight:"85vh",overflowY:"auto",animation:"slideUp .3s cubic-bezier(.32,.72,.37,1.05)",paddingBottom:24,border:"3px solid #1a1a1a",borderBottom:"none"}}>
+      <div style={{padding:"10px 0 4px",textAlign:"center"}}><div style={{width:40,height:5,background:"#ddd",borderRadius:3,margin:"0 auto"}}/></div>
       <div style={{padding:"0 18px"}}>
-        <Badge bg={(CC[sel.category]||{bg:"#666"}).bg}>{(CC[sel.category]||{icon:"⚡"}).icon} {(CC[sel.category]||{label:"EVENTO"}).label}</Badge>
-        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:28,textTransform:"uppercase",lineHeight:1.1,marginTop:10,letterSpacing:.5}}>{sel.title}</div>
-        <div style={{fontSize:14,color:"#555",lineHeight:1.7,marginTop:10}}>{sel.description}</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
-          <span style={{background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:600}}>📍 {sel.location}</span>
-          {sel.time&&<span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>⏰ {sel.time}</span>}
-          {sel.orari&&<span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>🕐 {sel.orari}</span>}
+        <Badge bg={(CC[sel.category]||{bg:"#666"}).bg}>{(CC[sel.category]||{icon:"\u26a1"}).icon} {(CC[sel.category]||{label:"EVENTO"}).label}</Badge>
+        <div style={{fontFamily:"'Passion One',sans-serif",fontSize:26,textTransform:"uppercase",lineHeight:1.1,marginTop:8,letterSpacing:.5}}>{sel.title}</div>
+        <div style={{fontSize:14,color:"#555",lineHeight:1.7,marginTop:8}}>{sel.description}</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
+          <span style={{background:"#FCD34D",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:600}}>\ud83d\udccd {sel.location}</span>
+          {sel.time&&<span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>\u23f0 {sel.time}</span>}
+          {sel.orari&&<span style={{background:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12}}>\ud83d\udd50 {sel.orari}</span>}
           {sel.free&&<span style={{background:"#10B981",color:"#fff",border:"2px solid #1a1a1a",borderRadius:12,padding:"4px 12px",fontSize:12,fontWeight:700}}>GRATIS</span>}
         </div>
-        <div style={{display:"flex",gap:10,marginTop:16}}>
-          <button onClick={()=>window.open("https://maps.google.com/maps?q="+encodeURIComponent(sel.location+(sel.city?", "+sel.city:"")),"_blank")} style={{flex:1,background:"#1a1a1a",color:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:14,padding:14,fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:1,cursor:"pointer",boxShadow:"3px 3px 0 #92400E"}}>MAPPA</button>
-          <button onClick={()=>toggleSave(sel.id)} style={{flex:1,background:saved.includes(sel.id)?"#DC2626":"#FCD34D",color:saved.includes(sel.id)?"#fff":"#1a1a1a",border:"3px solid #1a1a1a",borderRadius:14,padding:14,fontFamily:"'Passion One',sans-serif",fontSize:16,letterSpacing:1,cursor:"pointer",boxShadow:"3px 3px 0 #1a1a1a"}}>{saved.includes(sel.id)?"✓ SALVATO":"❤️ SALVA"}</button>
+        <div style={{display:"flex",gap:10,marginTop:14}}>
+          <button onClick={()=>window.open("https://maps.google.com/maps?q="+encodeURIComponent(sel.location),"_blank")} style={{flex:1,background:"#1a1a1a",color:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:14,padding:13,fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,cursor:"pointer"}}>MAPPA</button>
+          <button onClick={()=>toggleSave(sel.id)} style={{flex:1,background:saved.includes(sel.id)?"#DC2626":"#FCD34D",color:saved.includes(sel.id)?"#fff":"#1a1a1a",border:"3px solid #1a1a1a",borderRadius:14,padding:13,fontFamily:"'Passion One',sans-serif",fontSize:15,letterSpacing:1,cursor:"pointer"}}>{saved.includes(sel.id)?"\u2713 SALVATO":"\u2764\ufe0f SALVA"}</button>
         </div>
         <div style={{display:"flex",gap:10,marginTop:8}}>
-          <button onClick={()=>window.open("https://wa.me/?text="+encodeURIComponent(sel.title+"\n"+sel.location+"\n"+(sel.time||sel.orari||"")+"\n\nScoperto su EVENTOON!"),"_blank")} style={{flex:1,background:"#25D366",color:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:12,fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>WHATSAPP</button>
-          <button onClick={()=>{navigator.clipboard?.writeText(sel.title+" — "+sel.location+" | EVENTOON!");alert("Copiato!")}} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:12,fontFamily:"'Passion One',sans-serif",fontSize:14,letterSpacing:1,cursor:"pointer"}}>📋 COPIA</button>
+          <button onClick={()=>window.open("https://wa.me/?text="+encodeURIComponent(sel.title+"\n"+sel.location+"\n"+(sel.time||sel.orari||"")+"\n\nScoperto su EVENTOON!"),"_blank")} style={{flex:1,background:"#25D366",color:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:1,cursor:"pointer"}}>WHATSAPP</button>
+          <button onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText(sel.title+" \u2014 "+sel.location+" | EVENTOON!");alert("Copiato!")}} style={{flex:1,background:"#fff",border:"3px solid #1a1a1a",borderRadius:14,padding:11,fontFamily:"'Passion One',sans-serif",fontSize:13,letterSpacing:1,cursor:"pointer"}}>\ud83d\udccb COPIA</button>
         </div>
       </div>
     </div>
   </div>}
 
-  {/* ══════ BOTTOM BAR — REGGIOVIVA STYLE ══════ */}
-  <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"3px solid #1a1a1a",display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:"6px 4px 0",paddingBottom:"calc(6px + env(safe-area-inset-bottom,14px))",zIndex:60}}>
-    {[
-      {id:"home",type:"home",label:"HOME"},
-      {id:"map",type:"map",label:"MAPPA"},
-      {id:"fumetto",type:"fumetto",label:"FUMETT."},
-      {id:"ads",type:"ads",label:"ADS"},
-      {id:"profile",type:"profile",label:"PROFILO"},
-    ].map(t=>{
-      const isActive=tab===t.id;
-      const isCenter=t.id==="fumetto";
+  {/* BOTTOM BAR - white bg, filled gray icons, yellow pill active, bigger */}
+  <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"3px solid #1a1a1a",display:"flex",justifyContent:"space-around",alignItems:"flex-end",padding:"4px 2px 0",paddingBottom:"calc(4px + env(safe-area-inset-bottom,12px))",zIndex:60}}>
+    {[{id:"home",type:"home",label:"HOME"},{id:"map",type:"map",label:"MAPPA"},{id:"fumetto",type:"fumetto",label:"FUMETTO"},{id:"ads",type:"ads",label:"ADS"},{id:"profile",type:"profile",label:"PROFILO"}].map(t=>{
+      const isA=tab===t.id;
       return(
-        <div key={t.id} onClick={()=>{setTab(t.id);setSel(null)}} style={{textAlign:"center",cursor:"pointer",minWidth:58,position:"relative",marginBottom:isCenter&&isActive?4:0}}>
-          {isActive?(
-            <div style={{
-              background:"#FCD34D",
-              border:"3px solid #1a1a1a",
-              borderRadius:isCenter?20:16,
-              padding:isCenter?"10px 10px 4px":"8px 8px 2px",
-              display:"inline-flex",flexDirection:"column",alignItems:"center",
-              boxShadow:"2px 2px 0 #1a1a1a",
-              marginBottom:isCenter?-6:0,
-              transform:isCenter?"scale(1.1)":"none",
-            }}>
-              <BarIcon type={t.type} active={true}/>
-              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:8,letterSpacing:1.5,color:"#1a1a1a",marginTop:2}}>{t.label}</div>
+        <div key={t.id} onClick={()=>{setTab(t.id);setSel(null);if(t.id==="map"&&mapObj.current)setTimeout(()=>mapObj.current.invalidateSize(),150)}} style={{textAlign:"center",cursor:"pointer",minWidth:60}}>
+          {isA?(
+            <div style={{background:"#FCD34D",border:"3px solid #1a1a1a",borderRadius:18,padding:"8px 10px 4px",display:"inline-flex",flexDirection:"column",alignItems:"center",boxShadow:"2px 2px 0 #1a1a1a"}}>
+              <BI type={t.type} active={true}/>
+              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:11,letterSpacing:1.5,color:"#1a1a1a",marginTop:1}}>{t.label}</div>
             </div>
           ):(
-            <div style={{padding:"8px 4px 2px",display:"inline-flex",flexDirection:"column",alignItems:"center"}}>
-              <BarIcon type={t.type} active={false}/>
-              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:8,letterSpacing:1.2,color:"#888",marginTop:3}}>{t.label}</div>
+            <div style={{padding:"8px 4px 4px",display:"inline-flex",flexDirection:"column",alignItems:"center"}}>
+              <BI type={t.type} active={false}/>
+              <div style={{fontFamily:"'Passion One',sans-serif",fontSize:11,letterSpacing:1,color:"#888",marginTop:2}}>{t.label}</div>
             </div>
           )}
         </div>
@@ -485,7 +455,7 @@ function App(){
 </div>);
 }
 
-ReactDOM.render(<App/>, document.getElementById("root"));
+ReactDOM.render(<App/>,document.getElementById("root"));
 </script>
 </body>
 </html>
